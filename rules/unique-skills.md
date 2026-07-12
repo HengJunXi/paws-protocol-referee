@@ -40,7 +40,7 @@ Redeploy an eliminated Mine or Missile in any position, without revealing their 
 
 **Note:** Weaponry cards (Mini Missile 🚀, Micro Mine 💣) have no Unique Skills.
 
-> The referee web app (`index.html`) resolves raw card-vs-card combat and additionally
+> The umpire web app (`index.html`) resolves raw card-vs-card combat and additionally
 > supports two Unique Skills: **Furor Tigris** (Colonel Tiger attacks two targets — two of the
 > same card allowed in 2v2) and **Lionheart** (a per-side rank bonus: +1 in 1v1, up to +2 in
 > 2v2 with both Lions). All other Unique Skills are applied manually by the players during play.

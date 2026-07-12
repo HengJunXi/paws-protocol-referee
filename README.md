@@ -1,6 +1,6 @@
-# P.A.W.S. Protocol — Referee
+# P.A.W.S. Protocol — Umpire
 
-A dead-simple, mobile-first, single-page web app that acts as a referee for the board game
+A dead-simple, mobile-first, single-page web app that acts as an umpire for the board game
 **P.A.W.S. Protocol**. It resolves an attack between an attacker card and a defender card
 **without ever revealing either card's identity** — it only reports whether each card *survives*
 or is *eliminated*.

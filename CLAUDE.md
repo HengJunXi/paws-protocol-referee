@@ -4,12 +4,12 @@ Guidance for Claude Code when working in this repository.
 
 ## What this is
 
-A **single-page, mobile-first web referee** for the board game **P.A.W.S. Protocol**.
+A **single-page, mobile-first web umpire** for the board game **P.A.W.S. Protocol**.
 It resolves an attack between an attacker card and a defender card **without revealing either
 card's identity** — it only reports whether each card *survives* or is *eliminated*.
 
 Supports both **1v1** (2 players, one set of 9 cards each) and **2v2** (4 players, each team
-has 2 copies of every card = 18 cards) via a mode toggle. The referee still resolves one
+has 2 copies of every card = 18 cards) via a mode toggle. The umpire still resolves one
 matchup at a time by card *type* and does not track the win condition (that stays with the
 players); 2v2 only changes two skills — Lionheart can stack to +2, and Furor Tigris may hit
 two of the same card.
@@ -29,7 +29,7 @@ dependencies, and no state persisted between resolutions (each attack is fully i
 ## The game, in brief
 
 9 card types. 7 ranked characters + 2 unranked weaponry cards (in 2v2 each team holds two of
-every type, 18 cards total; the referee still works per type):
+every type, 18 cards total; the umpire still works per type):
 
 | Card | Emoji | Rank |
 |------|-------|------|

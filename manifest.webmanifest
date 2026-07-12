@@ -1,7 +1,7 @@
 {
-  "name": "P.A.W.S. Protocol Referee",
-  "short_name": "PAWS Referee",
-  "description": "Referee for the P.A.W.S. Protocol board game.",
+  "name": "P.A.W.S. Protocol Umpire",
+  "short_name": "PAWS Umpire",
+  "description": "Umpire for the P.A.W.S. Protocol board game.",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",

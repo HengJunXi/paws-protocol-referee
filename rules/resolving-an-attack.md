@@ -33,9 +33,9 @@ Rat always wins.
 
 ---
 
-## How the referee app applies these rules
+## How the umpire app applies these rules
 
-The referee (`index.html`) resolves an attack of **attacker → defender** and reports only
+The umpire (`index.html`) resolves an attack of **attacker → defender** and reports only
 whether each card *survives* or is *eliminated* (never the identity). Micro Mine may attack,
 but it always loses (it self-destructs when attacking).
 
