@@ -11,8 +11,11 @@ Lionheart can stack to +2, and Furor Tigris may hit two of the same card).
 Everything is client-side — no build step, no server, and no history kept between resolutions.
 Three preferences are remembered across visits via `localStorage`: the **1v1/2v2 mode**, a
 **light/dark theme toggle** (defaults to your device's preference), and the **language**
-(English only for now — the app is built to support more languages, but only English ships
-today).
+(English and Simplified Chinese ship today, switchable via the 🌐 button; more languages can be
+added as a pure data change).
+
+Made a wrong pick? There's no in-app "back" once the attacker is locked in — refresh the page
+(or pull down to refresh) to reset the resolution. Both hand-off screens show this as a hint.
 
 ## How it works
 

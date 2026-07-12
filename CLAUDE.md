@@ -92,13 +92,23 @@ The authoritative implementation is the `resolve(a, d)` function in `index.html`
    `<a href>`s on the About page (Atelier Rayfish, BGG), which open in a new tab. It runs on the
    GitHub Pages free tier as-is. (No service worker, so it is not offline-cached.)
 6. **i18n.** All user-facing text is looked up via `t(key, ...args)` against the `STRINGS`
-   dictionary (currently only `en` ships). Static markup text is set by `applyStaticText()`
+   dictionary (`en` and `zh-CN` ship today). Static markup text is set by `applyStaticText()`
    (id-targeted, run on init and on language change); dynamically-built content (card lists,
    modals, rules sheet, result screen) already calls `t()` directly inside its own render
    functions. `CARDS` entries hold a `nameKey` (not a hardcoded name) resolved via `t()`.
    Adding a language is a pure data change — add a key to `STRINGS` and `LANG_NAMES`; the
    language picker (`renderLangList`) enumerates `STRINGS` automatically. `setLang()` persists
    the choice to `localStorage['paws-umpire:lang']` (see invariant 4) and re-renders in place.
+   zh-CN card names, rank/skill terminology, and rule text use the official Simplified Chinese
+   wording from the game's printed rules cards and box art (e.g. 萌爪协议, 雷鱼工坊 for Atelier
+   Rayfish) — check the box art or rules cards before changing any zh-CN game terminology.
+   `<html lang>` and `<title>` are kept in sync with the active language (set synchronously in
+   a `<head>` script before first paint, same pattern as the theme flash-prevention script, plus
+   on every `setLang()` call) — this alone did **not** stop Chrome/Brave's translate prompt from
+   appearing on zh-CN content, because that feature runs its own content-based language
+   detection independent of the `lang` attribute. The actual fix is `translate="no"` on `<html>`
+   plus `<meta name="google" content="notranslate">`, which tell the browser not to offer
+   translation for this page at all.
 
 ## Flow
 
@@ -119,6 +129,10 @@ targets (`defenderPicks` holds them in order). There is no confirm button — th
 modal opens automatically** once the required count is selected (single: attacker-style big
 card; Furor: a list of both targets). Cancel pops the triggering pick and returns to selection.
 Confirm → "show the device to the Attacker" gate with a **Show Result** button → result.
+Since there's no going back once the attacker is locked in, both hand-off screens
+(`screen-pass`, `screen-show-result`) show a small muted footer hint that refreshing (or
+pull-to-refresh) resets the resolution — this was already true (see invariant 4) but
+previously undocumented in the UI itself.
 
 Two pill buttons in a right-aligned row above the header (`.topbar` / `.pill-btn`, in normal
 flow so they don't overlap the title on small screens) open full-screen overlays at any time,
