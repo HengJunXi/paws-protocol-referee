@@ -81,7 +81,7 @@
     letter-spacing: 1px;
     margin-bottom: 4px;
   }
-  .step-head { display: flex; align-items: center; justify-content: space-between; }
+  .step-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
   .step-head .step-label { margin-bottom: 0; }
   .mode-chip {
     font-size: 0.7rem;
@@ -107,6 +107,18 @@
     background: rgba(245, 195, 68, 0.12);
     border: 1px solid var(--gold);
     color: var(--gold);
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 0.82rem;
+    margin-bottom: 12px;
+  }
+  .info-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(224, 123, 57, 0.12);
+    border: 1px solid var(--accent);
+    color: var(--accent);
     border-radius: 10px;
     padding: 8px 12px;
     font-size: 0.82rem;
@@ -426,6 +438,9 @@
       <div class="step-label">Defender</div>
       <span class="mode-chip" id="defender-mode-chip">1v1</span>
     </div>
+    <div id="atk-buff-banner" class="info-banner" style="display:none">
+      <span>🦁</span><span id="atk-buff-text">Attacker's Lionheart is active.</span>
+    </div>
     <div id="furor-banner" class="furor-banner" style="display:none">
       <span>🐯</span><span id="furor-banner-text">Furor Tigris — Colonel Tiger strikes two targets.</span>
     </div>
@@ -696,6 +711,10 @@
     defenderPicks = [];
     document.getElementById('defender-mode-chip').textContent = mode;
     document.getElementById('furor-banner').style.display = furor ? 'flex' : 'none';
+    // Show the attacker's Lionheart level (it's announced in-game) so the defender can plan.
+    document.getElementById('atk-buff-banner').style.display = attackerBuff > 0 ? 'flex' : 'none';
+    document.getElementById('atk-buff-text').textContent =
+      `Attacker's Lionheart is active — their unit(s) get +${attackerBuff} rank.`;
     document.getElementById('furor-banner-text').textContent = allowDupeTargets()
       ? 'Furor Tigris — Colonel Tiger strikes two targets (they may be the same card).'
       : 'Furor Tigris — Colonel Tiger strikes two different targets.';
