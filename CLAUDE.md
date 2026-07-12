@@ -4,9 +4,15 @@ Guidance for Claude Code when working in this repository.
 
 ## What this is
 
-A **single-page, mobile-first web referee** for the 1v1 board game **P.A.W.S. Protocol**.
+A **single-page, mobile-first web referee** for the board game **P.A.W.S. Protocol**.
 It resolves an attack between an attacker card and a defender card **without revealing either
 card's identity** — it only reports whether each card *survives* or is *eliminated*.
+
+Supports both **1v1** (2 players, one set of 9 cards each) and **2v2** (4 players, each team
+has 2 copies of every card = 18 cards) via a mode toggle. The referee still resolves one
+matchup at a time by card *type* and does not track the win condition (that stays with the
+players); 2v2 only changes two skills — Lionheart can stack to +2, and Furor Tigris may hit
+two of the same card.
 
 Everything is client-side and self-contained. There is no build step, no server, no
 dependencies, and no state persisted between resolutions (each attack is fully independent).
@@ -22,7 +28,8 @@ dependencies, and no state persisted between resolutions (each attack is fully i
 
 ## The game, in brief
 
-9 cards. 7 ranked characters + 2 unranked weaponry cards:
+9 card types. 7 ranked characters + 2 unranked weaponry cards (in 2v2 each team holds two of
+every type, 18 cards total; the referee still works per type):
 
 | Card | Emoji | Rank |
 |------|-------|------|
@@ -54,14 +61,21 @@ The authoritative implementation is the `resolve(a, d)` function in `index.html`
    card-vs-card combat. Two Unique Skills are wired into the UI:
    - **Furor Tigris** — Colonel Tiger attacks two different targets; each is resolved
      independently via `resolve()`, and Tiger is eliminated if it loses either matchup.
-   - **Lionheart** — a per-side "+1 rank" toggle (`attackerBuff` / `defenderBuff`) on the
-     attacker and defender screens. The +1 applies **only** in the rank-comparison branch of
-     `resolve()`; every special case (Rat, Missile, Mine, Lion vs Lion) stays rank-independent,
-     so attacker-Lion still beats defender-Lion regardless of buffs, and a buffed Tiger (6+1)
-     can tie an unbuffed Lion (7) → both eliminated. Toggling re-renders that side's list so
-     ranks show the buffed number plus a highlighted `.buff-star`; the result screen surfaces
-     each side's state via the Lionheart chips (see Flow). Rank display and the modals share
-     one helper, `rankHtml(c, buffed)`, so nothing drifts from the logic.
+   - **Lionheart** — a per-side rank bonus (`attackerBuff` / `defenderBuff`, integers 0..`maxStacks()`)
+     set by a segmented control on the attacker and defender screens. Max is +1 in 1v1 and +2 in
+     2v2 (two Lions stacking). The bonus applies **only** in the rank-comparison branch of
+     `resolve(a, d, aBuff, dBuff)`; every special case (Rat, Missile, Mine, Lion vs Lion) stays
+     rank-independent, so attacker-Lion still beats defender-Lion regardless of buffs, and a
+     buffed Tiger (6+1) can tie an unbuffed Lion (7) → both eliminated. Changing the level
+     re-renders that side's list so ranks show the buffed number plus one accent `.buff-star`
+     per +1; the result screen surfaces each side's level via the Lionheart chips (see Flow).
+     Rank display and the modals share one helper, `rankHtml(c, buff)`, so nothing drifts.
+   - **2v2 targeting** — in 2v2 Furor Tigris (`allowDupeTargets()`) the two targets may be the
+     same card; `toggleDefender` allows a card to be picked up to twice. 1v1 keeps distinct
+     targets. In Furor, a selected card's badge is a **✕ remove-one** control (`removeOneDefender`,
+     `stopPropagation` so it doesn't also add) — needed because tapping a selected card adds a
+     duplicate in 2v2, so there'd otherwise be no way to cancel a single target. Each matchup
+     still resolves independently via `resolve()`.
 
    All other skills (Grizzly Guard, Tusk Rampage, etc.) remain out of scope — players apply
    them manually. Keep `resolve()` free of other skill effects.
@@ -73,8 +87,10 @@ The authoritative implementation is the `resolve(a, d)` function in `index.html`
 
 ## Flow
 
-Both the attacker and defender screens carry a **🦁 Lionheart (+1 rank)** checkbox that sets
-that side's buff before picking.
+The attacker screen has a **1v1 / 2v2** mode toggle (`#mode-seg`, `setMode`); `mode` persists
+across resolutions. The defender screen shows the locked mode as a read-only chip
+(`#defender-mode-chip`). Both the attacker and defender screens carry a **🦁 Lionheart**
+segmented control (Off / +1 / +2, capped by `maxStacks()`) that sets that side's buff before picking.
 
 Attacker picks (9 options) → **confirmation modal** (shows the picked character, plus a
 Lionheart note if active; picking Colonel Tiger offers "Single attack" or "Furor Tigris —
@@ -97,8 +113,9 @@ Result screens:
   only when at least one side used it (`showBuff = attackerBuff || defenderBuff`).
 
 Screen IDs: `screen-attacker`, `screen-pass`, `screen-defender`, `screen-show-result`,
-`screen-result`. State: `attackerId`, `furor`, `defenderPicks[]`, `attackerBuff`,
-`defenderBuff` (all reset each resolution).
+`screen-result`. State reset each resolution: `attackerId`, `furor`, `defenderPicks[]`,
+`attackerBuff`, `defenderBuff`. `mode` (`'1v1'`/`'2v2'`) is a session setting and is **not**
+reset per resolution.
 
 ## Conventions
 
@@ -125,6 +142,8 @@ Open `index.html` in a browser. Sanity checks:
 - Mine → Missile: Mine eliminated, Missile survives (Missile's Mine exception).
 - Buffed Tiger (attacker Lionheart) → unbuffed Lion: both eliminated (6+1 ties 7).
 - Attacker Lion → defender Lion with defender Lionheart on: attacker still survives (special).
+- 2v2: attacker Lionheart +2 makes Tiger (6+2=8) beat unbuffed Lion (7).
+- 2v2 Furor Tigris → Tiger + Tiger (same card twice, `×2` badge): resolves both targets.
 - Furor Tigris → Cat + Mine: Tiger eliminated (loses to Mine); Target 1 (Cat) eliminated,
   Target 2 (Mine) eliminated. Second target list must exclude the first pick.
 

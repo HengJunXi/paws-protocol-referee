@@ -81,6 +81,18 @@
     letter-spacing: 1px;
     margin-bottom: 4px;
   }
+  .step-head { display: flex; align-items: center; justify-content: space-between; }
+  .step-head .step-label { margin-bottom: 0; }
+  .mode-chip {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--gold);
+    border: 1px solid var(--gold);
+    border-radius: 999px;
+    padding: 3px 10px;
+  }
   .screen h2 {
     margin: 0 0 14px;
     font-size: 1.25rem;
@@ -137,25 +149,38 @@
     align-items: center;
     justify-content: center;
   }
+  /* Bigger, thumb-friendly tap target for removing a Furor target (≈44px) */
+  .pick-badge.remove {
+    cursor: pointer;
+    min-width: 44px;
+    height: 44px;
+    border-radius: 22px;
+    font-size: 1.15rem;
+    margin: -4px -2px -4px 0; /* grow the hit area without making the row taller */
+  }
+  .pick-badge.remove:active { filter: brightness(0.88); }
 
-  .buff-toggle {
+  /* Settings rows (mode selector, Lionheart level) — label + segmented control */
+  .setting-row {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 12px;
     padding: 12px 14px;
     margin-bottom: 12px;
     background: var(--panel);
     border: 1px solid var(--line);
     border-radius: 12px;
-    cursor: pointer;
-    user-select: none;
   }
-  .buff-toggle input { width: 20px; height: 20px; accent-color: var(--gold); flex-shrink: 0; }
-  .buff-toggle .bt-label { display: flex; flex-direction: column; gap: 1px; }
-  .buff-toggle .bt-title { font-size: 0.92rem; font-weight: 600; }
-  .buff-toggle .bt-sub { font-size: 0.72rem; color: var(--muted); }
+  .setting-row .sr-label { display: flex; flex-direction: column; gap: 1px; }
+  .setting-row .sr-title { font-size: 0.92rem; font-weight: 600; }
+  .setting-row .sr-sub { font-size: 0.72rem; color: var(--muted); }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; flex-shrink: 0; }
+  .seg-btn { background: transparent; border: none; color: var(--muted); padding: 7px 13px; font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .seg-btn + .seg-btn { border-left: 1px solid var(--line); }
+  .seg-btn.active { background: var(--gold); color: #2a2410; }
   .modal-buff { margin-top: 10px; font-size: 0.82rem; color: var(--gold); }
-  /* The Lionheart "+1" star — accent-colored and glowing so it reads as an added buff */
+  /* The Lionheart "+1" star(s) — accent-colored and glowing so they read as an added buff */
   .buff-star { color: var(--accent); text-shadow: 0 0 5px var(--accent); font-weight: 700; margin-left: 3px; }
 
   .spacer { flex: 1; }
@@ -368,10 +393,17 @@
   <section id="screen-attacker" class="screen active">
     <div class="step-label">Attacker</div>
     <h2><span class="who">Attacker</span>, pick your card</h2>
-    <label class="buff-toggle">
-      <input type="checkbox" id="attacker-buff" onchange="setAttackerBuff(this.checked)">
-      <span class="bt-label"><span class="bt-title">🦁 Lionheart</span><span class="bt-sub">My units gain +1 rank</span></span>
-    </label>
+    <div class="setting-row">
+      <span class="sr-label"><span class="sr-title">Players</span><span class="sr-sub">Team size</span></span>
+      <div class="seg" id="mode-seg">
+        <button type="button" class="seg-btn active" data-mode="1v1" onclick="setMode('1v1')">1v1</button>
+        <button type="button" class="seg-btn" data-mode="2v2" onclick="setMode('2v2')">2v2</button>
+      </div>
+    </div>
+    <div class="setting-row">
+      <span class="sr-label"><span class="sr-title">🦁 Lionheart</span><span class="sr-sub">My units gain +rank</span></span>
+      <div class="seg" id="attacker-buff-seg"></div>
+    </div>
     <div id="attacker-list" class="card-list"></div>
     <footer>Hold the device so your opponent can't see your choice.</footer>
   </section>
@@ -390,17 +422,20 @@
 
   <!-- STEP 3: Defender picks (multi-select in Furor Tigris) -->
   <section id="screen-defender" class="screen">
-    <div class="step-label">Defender</div>
+    <div class="step-head">
+      <div class="step-label">Defender</div>
+      <span class="mode-chip" id="defender-mode-chip">1v1</span>
+    </div>
     <div id="furor-banner" class="furor-banner" style="display:none">
-      <span>⚔️</span><span>Furor Tigris — Colonel Tiger strikes two different targets.</span>
+      <span>⚔️</span><span id="furor-banner-text">Furor Tigris — Colonel Tiger strikes two targets.</span>
     </div>
     <h2 id="defender-heading"><span class="who">Defender</span>, pick your card</h2>
-    <label class="buff-toggle">
-      <input type="checkbox" id="defender-buff" onchange="setDefenderBuff(this.checked)">
-      <span class="bt-label"><span class="bt-title">🦁 Lionheart</span><span class="bt-sub">My units gain +1 rank</span></span>
-    </label>
+    <div class="setting-row">
+      <span class="sr-label"><span class="sr-title">🦁 Lionheart</span><span class="sr-sub">My units gain +rank</span></span>
+      <div class="seg" id="defender-buff-seg"></div>
+    </div>
     <div id="defender-list" class="card-list"></div>
-    <footer>Hold the device so your opponent can't see your choice.</footer>
+    <footer id="defender-foot">Hold the device so your opponent can't see your choice.</footer>
   </section>
 
   <!-- STEP 4: Hand device back to attacker before revealing -->
@@ -449,17 +484,19 @@
         <li><strong>Rat</strong> vs Lion, Mine or Missile &rarr; Rat always wins.</li>
         <li><strong>Missile</strong> attacking destroys the target but self-destructs (both eliminated); when attacked it is destroyed — except by a Mine, which it survives. Beaten by a Rat.</li>
         <li><strong>Mine</strong> attacking always self-destructs and the defender survives (two Mines eliminate each other); when attacked, it destroys its attacker but self-destructs (both eliminated). Beaten by a Rat.</li>
-        <li><strong>Furor Tigris</strong> &rarr; Colonel Tiger strikes two different targets; each is resolved separately, and Tiger is eliminated if it loses either.</li>
+        <li><strong>Furor Tigris</strong> &rarr; Colonel Tiger strikes two targets, each resolved separately; Tiger is eliminated if it loses either. In 1v1 the targets must differ; in 2v2 they may be the same card.</li>
+        <li><strong>Lionheart</strong> &rarr; each activated General Lion gives that side's units +1 rank (up to +1 in 1v1, +2 in 2v2 with both Lions). Applies to the rank comparison only.</li>
       </ul>
 
       <h3>Winning</h3>
       <ul>
-        <li>The game ends the instant a <strong>General Lion</strong> is eliminated — whoever eliminated it wins.</li>
+        <li><strong>1v1:</strong> the game ends the instant a <strong>General Lion</strong> is eliminated — whoever eliminated it wins.</li>
+        <li><strong>2v2:</strong> a team is defeated only when <strong>both</strong> of its General Lions are eliminated; losing just one keeps the game going.</li>
       </ul>
 
       <div class="rules-note">
         This referee only reports <strong>survived</strong> / <strong>eliminated</strong> — it never reveals a card's identity.
-        Unique Skills other than Furor Tigris (Lionheart, Grizzly Guard, etc.) are applied by the players themselves.
+        Furor Tigris and Lionheart are handled here; other Unique Skills (Grizzly Guard, etc.) are applied by the players themselves.
       </div>
     </div>
   </div>
@@ -489,16 +526,41 @@
   const DEFENDER_IDS = ['lion','tiger','bear','boar','wolf','cat','rat','missile','mine'];
 
   // --- State (reset every resolution) ---
+  let mode = '1v1';           // '1v1' or '2v2' — a session setting, not reset per resolution
   let attackerId = null;
   let attackerHighlight = null; // visual tick on the attacker screen (before confirm)
   let furor = false;          // Furor Tigris active (Colonel Tiger attacks two targets)
   let defenderPicks = [];     // 1 defender normally, 2 in Furor Tigris (in selection order)
-  let attackerBuff = false;   // Lionheart on the attacker's side: their unit(s) gain +1 rank
-  let defenderBuff = false;   // Lionheart on the defender's side: their unit(s) gain +1 rank
-  function setAttackerBuff(on) { attackerBuff = on; buildAttackerList(); }   // re-render to show +1
-  function setDefenderBuff(on) { defenderBuff = on; refreshDefender(); }     // re-render to show +1
+  let attackerBuff = 0;       // Lionheart rank bonus on the attacker's side (0..maxStacks)
+  let defenderBuff = 0;       // Lionheart rank bonus on the defender's side (0..maxStacks)
 
   function requiredDefenders() { return furor ? 2 : 1; }
+  function maxStacks() { return mode === '2v2' ? 2 : 1; }  // Lionheart can stack twice in 2v2
+  function allowDupeTargets() { return mode === '2v2' && furor; } // Furor may hit 2 of the same card
+
+  // Segmented Lionheart control (Off / +1 / +2 depending on mode)
+  function renderBuffControl(id, value, onSet) {
+    const el = document.getElementById(id);
+    el.innerHTML = '';
+    for (let i = 0; i <= maxStacks(); i++) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'seg-btn' + (i === value ? ' active' : '');
+      b.textContent = i === 0 ? 'Off' : '+' + i;
+      b.onclick = () => onSet(i);
+      el.appendChild(b);
+    }
+  }
+  function setAttackerBuff(v) { attackerBuff = v; renderBuffControl('attacker-buff-seg', v, setAttackerBuff); buildAttackerList(); }
+  function setDefenderBuff(v) { defenderBuff = v; renderBuffControl('defender-buff-seg', v, setDefenderBuff); refreshDefender(); }
+  function setMode(m) {
+    mode = m;
+    document.querySelectorAll('#mode-seg .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+    attackerBuff = 0;
+    defenderBuff = 0;
+    renderBuffControl('attacker-buff-seg', attackerBuff, setAttackerBuff);
+    buildAttackerList();
+  }
 
   // --- Attack resolution per P.A.W.S. Protocol "Resolving an Attack" rules ---
   // aBuff / dBuff: Lionheart active on that side (+1 rank). Only affects the rank comparison;
@@ -528,9 +590,9 @@
     // Lion vs Lion: attacker always wins
     if (a === 'lion' && d === 'lion') return { atk: SURV, def: ELIM };
 
-    // Both are ranked animals; apply the Lionheart +1 to each side's rank if active.
-    const ra = CARDS[a].rank + (aBuff ? 1 : 0);
-    const rd = CARDS[d].rank + (dBuff ? 1 : 0);
+    // Both are ranked animals; add each side's Lionheart bonus (0..2) to its rank.
+    const ra = CARDS[a].rank + (aBuff || 0);
+    const rd = CARDS[d].rank + (dBuff || 0);
     if (ra === rd) return { atk: ELIM, def: ELIM };   // equal rank -> both eliminated
     if (ra > rd)   return { atk: SURV, def: ELIM };   // higher rank eliminates lower
     return { atk: ELIM, def: SURV };
@@ -539,14 +601,16 @@
   // --- Modal ---
   // Rank label (gold). When buffed by Lionheart, the number is +1 and a highlighted extra
   // star is appended so the buff is visible. Weaponry has no rank, so a buff shows nothing.
-  function rankHtml(c, buffed) {
+  function rankHtml(c, buff) {
+    buff = buff || 0;
     if (!c.rank) return `<span style="color:var(--muted)">Weaponry</span>`;
-    const num = c.rank + (buffed ? 1 : 0);
-    const buffStar = buffed ? `<span class="buff-star" title="Lionheart +1">★</span>` : '';
-    return `<span style="color:var(--gold)">${num} · ${c.stars}</span>${buffStar}`;
+    const num = c.rank + buff;
+    let buffStars = '';
+    for (let i = 0; i < buff; i++) buffStars += `<span class="buff-star" title="Lionheart +1">★</span>`;
+    return `<span style="color:var(--gold)">${num} · ${c.stars}</span>${buffStars}`;
   }
-  function buffNote(on) {
-    return on ? `<div class="modal-buff">🦁 Lionheart active — +1 rank</div>` : '';
+  function buffNote(n) {
+    return n > 0 ? `<div class="modal-buff">🦁 Lionheart active — +${n} rank</div>` : '';
   }
   function cardBig(c, buffed) {
     return `<div class="modal-emoji">${c.emoji}</div><div class="modal-name">${c.name}</div><div class="modal-sub">${rankHtml(c, buffed)}</div>`;
@@ -630,19 +694,27 @@
   // --- Defender phase (multi-select) ---
   function startDefenderPhase() {
     defenderPicks = [];
+    document.getElementById('defender-mode-chip').textContent = mode;
     document.getElementById('furor-banner').style.display = furor ? 'flex' : 'none';
+    document.getElementById('furor-banner-text').textContent = allowDupeTargets()
+      ? 'Furor Tigris — Colonel Tiger strikes two targets (they may be the same card).'
+      : 'Furor Tigris — Colonel Tiger strikes two different targets.';
+    renderBuffControl('defender-buff-seg', defenderBuff, setDefenderBuff);
     refreshDefender();
     showScreen('screen-defender');
   }
   function toggleDefender(id) {
     const required = requiredDefenders();
-    const idx = defenderPicks.indexOf(id);
-    if (idx !== -1) {
-      defenderPicks.splice(idx, 1);            // deselect
+    const perCardMax = allowDupeTargets() ? 2 : 1;   // 2v2 Furor may pick 2 of the same card
+    const count = defenderPicks.filter(x => x === id).length;
+    if (count >= perCardMax) {
+      defenderPicks = defenderPicks.filter(x => x !== id);   // at this card's max -> clear it
     } else if (defenderPicks.length < required) {
-      defenderPicks.push(id);                  // select
+      defenderPicks.push(id);                                // add a copy
+    } else if (required === 1) {
+      defenderPicks = [id];                                  // single mode: replace
     } else {
-      return;                                  // required count already met — ignore
+      return;                                                // Furor already full with other cards
     }
     refreshDefender();
     // As soon as the required number of defenders is selected, ask to confirm.
@@ -654,23 +726,40 @@
     h.innerHTML = furor
       ? `<span class="who">Defender</span>, pick 2 targets <span class="count">(${defenderPicks.length}/2)</span>`
       : `<span class="who">Defender</span>, pick your card`;
+    // footer hint — in Furor the badge doubles as a remove control
+    document.getElementById('defender-foot').textContent = furor
+      ? "Tap a card to add a target; tap its ✕ badge to remove one."
+      : "Hold the device so your opponent can't see your choice.";
     // list
     const el = document.getElementById('defender-list');
     el.innerHTML = '';
     DEFENDER_IDS.forEach(id => {
       const c = CARDS[id];
-      const pos = defenderPicks.indexOf(id);
-      const selected = pos !== -1;
+      const count = defenderPicks.filter(x => x === id).length;
+      const selected = count > 0;
       const btn = document.createElement('button');
       btn.className = 'card-btn' + (selected ? ' selected' : '');
       const meta = c.rank
         ? `<span class="cname">${c.name}</span><span class="stars">${rankHtml(c, defenderBuff)}</span>`
         : `<span class="cname">${c.name}</span><span class="weapon-tag">Weaponry</span>`;
-      const badge = selected ? `<span class="pick-badge">${furor ? (pos + 1) : '✓'}</span>` : '';
+      // In Furor the badge is a remove-one control (✕); single-pick just shows a tick.
+      const badge = selected
+        ? (furor
+            ? `<span class="pick-badge remove" title="Remove target">${count > 1 ? count + '&nbsp;✕' : '✕'}</span>`
+            : `<span class="pick-badge">✓</span>`)
+        : '';
       btn.innerHTML = `<span class="emoji">${c.emoji}</span><span class="meta">${meta}</span>${badge}`;
       btn.onclick = () => toggleDefender(id);
+      if (selected && furor) {
+        const b = btn.querySelector('.pick-badge.remove');
+        b.onclick = (e) => { e.stopPropagation(); removeOneDefender(id); };  // remove without adding
+      }
       el.appendChild(btn);
     });
+  }
+  function removeOneDefender(id) {
+    const i = defenderPicks.indexOf(id);
+    if (i !== -1) { defenderPicks.splice(i, 1); refreshDefender(); }
   }
   function openDefenderConfirm() {
     let bodyHtml;
@@ -712,7 +801,7 @@
       `<div class="role">${roleTop}<span class="name">${roleName}</span></div>` +
       `<div class="status"><div class="icon">${status === 'survived' ? '🛡️' : '💥'}</div>` +
       `<div class="word">${status === 'survived' ? 'SURVIVED' : 'ELIMINATED'}</div></div>` +
-      (showBuff ? `<div class="buff-chip ${buffed ? 'on' : 'off'}">${buffed ? '🦁 Lionheart +1' : 'No Lionheart'}</div>` : '');
+      (showBuff ? `<div class="buff-chip ${buffed ? 'on' : 'off'}">${buffed ? ('🦁 Lionheart +' + buffed) : 'No Lionheart'}</div>` : '');
     return el;
   }
   function renderResult() {
@@ -721,7 +810,7 @@
     body.innerHTML = '';
 
     // Only surface the Lionheart chips when at least one side used it.
-    const showBuff = attackerBuff || defenderBuff;
+    const showBuff = attackerBuff > 0 || defenderBuff > 0;
 
     if (!furor) {
       const r = resolve(attackerId, defenderPicks[0], attackerBuff, defenderBuff);
@@ -756,10 +845,9 @@
     attackerHighlight = null;
     furor = false;
     defenderPicks = [];
-    attackerBuff = false;
-    defenderBuff = false;
-    document.getElementById('attacker-buff').checked = false;
-    document.getElementById('defender-buff').checked = false;
+    attackerBuff = 0;
+    defenderBuff = 0;             // `mode` persists across resolutions on purpose
+    renderBuffControl('attacker-buff-seg', attackerBuff, setAttackerBuff);
     closeModal();
     buildAttackerList();
     showScreen('screen-attacker');
@@ -787,6 +875,7 @@
   }
 
   // init
+  renderBuffControl('attacker-buff-seg', attackerBuff, setAttackerBuff);
   buildAttackerList();
   buildRulesRanks();
 </script>
