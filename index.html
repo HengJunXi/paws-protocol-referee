@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#1a1d21">
+<meta name="description" content="A pass-and-play umpire for the board game P.A.W.S. Protocol. Resolves an attack between two secretly-picked cards without revealing either card's identity.">
 <title>P.A.W.S. Protocol Umpire</title>
 <!-- Add-to-Home-Screen / installable web app -->
 <link rel="manifest" href="manifest.webmanifest">
@@ -100,6 +101,7 @@
     letter-spacing: 1px;
     text-transform: uppercase;
   }
+  main { display: flex; flex-direction: column; flex: 1; }
   .screen { display: none; flex: 1; flex-direction: column; }
   .screen.active { display: flex; }
 
@@ -466,6 +468,7 @@
     <div class="sub">Umpire</div>
   </header>
 
+  <main>
   <!-- STEP 1: Attacker picks -->
   <section id="screen-attacker" class="screen active">
     <div class="step-label">Attacker</div>
@@ -545,6 +548,7 @@
     <div class="spacer"></div>
     <button class="big-btn" onclick="reset()">New Resolution</button>
   </section>
+  </main>
 </div>
 
 <!-- Rules cheat-sheet -->
