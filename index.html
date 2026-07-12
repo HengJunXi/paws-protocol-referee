@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1a1d21">
+<title>P.A.W.S. Protocol Referee</title>
+<!-- Add-to-Home-Screen / installable web app -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PAWS Referee">
+<style>
+  :root {
+    --bg: #1a1d21;
+    --panel: #24282e;
+    --panel-2: #2d323a;
+    --line: #3a4048;
+    --text: #e8eaed;
+    --muted: #9aa3ad;
+    --accent: #e07b39;
+    --green: #3fbf6f;
+    --red: #e5484d;
+    --gold: #f5c344;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  button { font-family: inherit; } /* buttons don't inherit the page font by default */
+  /* Consistent scrollbars across the document and the rules overlay */
+  * { scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 6px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .app {
+    position: relative;
+    width: 100%;
+    max-width: 480px;
+    padding: 16px 16px 40px;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  header {
+    text-align: center;
+    padding: 8px 0 12px;
+  }
+  header h1 {
+    margin: 0;
+    font-size: 1.15rem;
+    letter-spacing: 0.5px;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+  header .sub {
+    margin: 2px 0 0;
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .screen { display: none; flex: 1; flex-direction: column; }
+  .screen.active { display: flex; }
+
+  .step-label {
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+  .screen h2 {
+    margin: 0 0 14px;
+    font-size: 1.25rem;
+  }
+  .screen h2 .who { color: var(--gold); }
+  .screen h2 .count { color: var(--muted); font-weight: 400; }
+
+  .furor-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(245, 195, 68, 0.12);
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 0.82rem;
+    margin-bottom: 12px;
+  }
+
+  .card-list { display: flex; flex-direction: column; gap: 10px; }
+  .card-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 14px 14px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    color: var(--text);
+    font-size: 1rem;
+    text-align: left;
+    cursor: pointer;
+    transition: background .12s, border-color .12s, transform .06s;
+  }
+  .card-btn:active { transform: scale(0.98); background: var(--panel-2); border-color: var(--accent); }
+  .card-btn.selected { border-color: var(--gold); background: var(--panel-2); }
+  .card-btn .emoji { font-size: 1.7rem; line-height: 1; width: 34px; text-align: center; }
+  .card-btn .meta { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+  .card-btn .cname { font-weight: 600; }
+  .card-btn .stars { color: var(--gold); font-size: 0.85rem; letter-spacing: 1px; }
+  .card-btn .weapon-tag { color: var(--muted); font-size: 0.75rem; }
+  .pick-badge {
+    min-width: 26px;
+    height: 26px;
+    padding: 0 6px;
+    border-radius: 13px;
+    background: var(--gold);
+    color: #2a2410;
+    font-weight: 800;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .spacer { flex: 1; }
+
+  .big-btn {
+    width: 100%;
+    padding: 18px;
+    border: none;
+    border-radius: 12px;
+    background: var(--accent);
+    color: #1a1013;
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+  }
+  .big-btn:active { filter: brightness(0.92); }
+  .big-btn:disabled { opacity: 0.4; cursor: not-allowed; filter: none; }
+
+  /* Pass / hand-off screens */
+  .pass {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 10px;
+  }
+  .pass .lock { font-size: 3.4rem; }
+  .pass h2 { font-size: 1.5rem; margin: 4px 0; }
+  .pass h2 .who { color: var(--gold); }
+  .pass p { color: var(--muted); margin: 0 0 8px; max-width: 300px; line-height: 1.5; }
+  .pass .actions { width: 100%; }
+
+  /* Result */
+  .result-head { text-align: center; margin-bottom: 18px; }
+  .result-head .title { font-size: 1.4rem; font-weight: 700; }
+  .outcome-row { display: flex; gap: 12px; margin-bottom: 8px; }
+  .outcome {
+    flex: 1;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px 10px;
+    text-align: center;
+  }
+  .outcome.full { margin-bottom: 12px; }
+  .outcome .role { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+  .outcome .role .name { display: block; margin-top: 2px; color: var(--gold); font-size: 0.82rem; text-transform: none; letter-spacing: 0; }
+  .outcome .status { margin-top: 12px; font-size: 1.1rem; font-weight: 800; letter-spacing: 0.5px; }
+  .outcome .icon { font-size: 2rem; }
+  .outcome.survived { border-color: var(--green); }
+  .outcome.survived .word { color: var(--green); }
+  .outcome.eliminated { border-color: var(--red); }
+  .outcome.eliminated .word { color: var(--red); }
+
+  .privacy-note {
+    margin-top: 16px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.78rem;
+    line-height: 1.5;
+    background: var(--panel);
+    border: 1px dashed var(--line);
+    border-radius: 12px;
+    padding: 12px;
+  }
+
+  footer { text-align: center; color: var(--muted); font-size: 0.68rem; margin-top: 18px; }
+
+  /* Rules cheat-sheet */
+  .rules-btn {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 0.72rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    z-index: 5;
+  }
+  .rules-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    display: none;
+    justify-content: center;
+    align-items: flex-start;
+    overflow-y: auto;
+    z-index: 200;
+  }
+  .rules-overlay.show { display: flex; }
+  html.no-scroll, html.no-scroll body { overflow: hidden; }
+  .rules-sheet { width: 100%; max-width: 480px; padding: 0 16px calc(48px + env(safe-area-inset-bottom, 0px)); }
+  .rules-head {
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 0 12px;
+    border-bottom: 1px solid var(--line);
+  }
+  .rules-title { font-size: 1.05rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; }
+  .rules-close {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--text);
+    border-radius: 999px;
+    width: 34px;
+    height: 34px;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  .rules-content h3 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin: 22px 0 8px; }
+  .rules-content ul { margin: 0; padding-left: 18px; line-height: 1.6; font-size: 0.9rem; }
+  .rules-content li { margin-bottom: 7px; }
+  .rules-content li strong { color: var(--text); }
+  .rank-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .rank-row .emoji { font-size: 1.4rem; width: 30px; text-align: center; }
+  .rank-row .rn { flex: 1; font-weight: 600; }
+  .rank-row .rs { color: var(--gold); font-size: 0.85rem; letter-spacing: 1px; }
+  .rules-note {
+    margin-top: 20px;
+    font-size: 0.8rem;
+    color: var(--muted);
+    background: var(--panel);
+    border: 1px dashed var(--line);
+    border-radius: 12px;
+    padding: 12px;
+    line-height: 1.55;
+  }
+
+  /* Confirmation modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.66);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 100;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    width: 100%;
+    max-width: 360px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 24px 20px;
+    text-align: center;
+  }
+  .modal-emoji { font-size: 3.4rem; line-height: 1; }
+  .modal-name { font-size: 1.35rem; font-weight: 700; margin-top: 8px; }
+  .modal-sub { margin-top: 4px; font-size: 0.9rem; }
+  .modal-msg { margin-top: 12px; color: var(--muted); font-size: 0.9rem; line-height: 1.4; }
+  .modal-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 14px; }
+  .modal-cards { display: flex; flex-direction: column; gap: 10px; text-align: left; }
+  .modal-card-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px;
+  }
+  .modal-card-row .emoji { font-size: 1.7rem; width: 34px; text-align: center; }
+  .modal-card-row .mc-meta { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+  .modal-card-row .mc-name { font-weight: 600; }
+  .modal-card-row .mc-sub { font-size: 0.8rem; color: var(--muted); }
+  .modal-card-row .mc-tag { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--gold); }
+  .modal-actions { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
+  .modal-btn { width: 100%; padding: 14px; border: none; border-radius: 12px; font-size: 1rem; font-weight: 700; cursor: pointer; }
+  .modal-btn:active { filter: brightness(0.92); }
+  .modal-btn.primary { background: var(--accent); color: #1a1013; }
+  .modal-btn.accent { background: var(--gold); color: #2a2410; }
+  .modal-btn.ghost { background: transparent; border: 1px solid var(--line); color: var(--muted); font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="app">
+  <button class="rules-btn" onclick="openRules()">Rules</button>
+  <header>
+    <h1>P.A.W.S. Protocol</h1>
+    <div class="sub">Referee</div>
+  </header>
+
+  <!-- STEP 1: Attacker picks -->
+  <section id="screen-attacker" class="screen active">
+    <div class="step-label">Attacker</div>
+    <h2><span class="who">Attacker</span>, pick your card</h2>
+    <div id="attacker-list" class="card-list"></div>
+    <footer>Hold the device so your opponent can't see your choice.</footer>
+  </section>
+
+  <!-- STEP 2: Hand device to defender -->
+  <section id="screen-pass" class="screen">
+    <div class="pass">
+      <div class="lock">🔒</div>
+      <h2>Attacker locked in</h2>
+      <p>The attacker's card is now hidden.<br>Pass the device to the <strong style="color:var(--gold)">Defender</strong>.</p>
+      <div class="actions">
+        <button class="big-btn" onclick="startDefenderPhase()">I'm the Defender — Continue</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 3: Defender picks (multi-select in Furor Tigris) -->
+  <section id="screen-defender" class="screen">
+    <div class="step-label">Defender</div>
+    <div id="furor-banner" class="furor-banner" style="display:none">
+      <span>⚔️</span><span>Furor Tigris — Colonel Tiger strikes two different targets.</span>
+    </div>
+    <h2 id="defender-heading"><span class="who">Defender</span>, pick your card</h2>
+    <div id="defender-list" class="card-list"></div>
+    <footer>Hold the device so your opponent can't see your choice.</footer>
+  </section>
+
+  <!-- STEP 4: Hand device back to attacker before revealing -->
+  <section id="screen-show-result" class="screen">
+    <div class="pass">
+      <div class="lock">📱</div>
+      <h2>Resolution ready</h2>
+      <p>Defender, show the device to the <strong style="color:var(--gold)">Attacker</strong>, then reveal the outcome together.</p>
+      <div class="actions">
+        <button class="big-btn" onclick="goResult()">Show Result</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESULT -->
+  <section id="screen-result" class="screen">
+    <div class="step-label">Result</div>
+    <div class="result-head">
+      <div class="title" id="result-title">Resolution</div>
+    </div>
+    <div id="result-body"></div>
+    <div class="privacy-note">
+      Card identities are never revealed by this referee — only whether each card survives or is eliminated.
+    </div>
+    <div class="spacer"></div>
+    <button class="big-btn" onclick="reset()">New Resolution</button>
+  </section>
+</div>
+
+<!-- Rules cheat-sheet -->
+<div id="rules-overlay" class="rules-overlay">
+  <div class="rules-sheet">
+    <div class="rules-head">
+      <div class="rules-title">Referee Rules</div>
+      <button class="rules-close" onclick="closeRules()" aria-label="Close">✕</button>
+    </div>
+    <div class="rules-content">
+      <h3>Cards &amp; ranks</h3>
+      <div id="rules-ranks"></div>
+
+      <h3>Resolving an attack</h3>
+      <ul>
+        <li><strong>Higher rank</strong> eliminates lower rank.</li>
+        <li><strong>Equal rank</strong> (same card) &rarr; both eliminated.</li>
+        <li><strong>Lion vs Lion</strong> &rarr; the attacker wins.</li>
+        <li><strong>Rat</strong> vs Lion, Mine or Missile &rarr; Rat always wins.</li>
+        <li><strong>Missile</strong> attacking destroys the target but self-destructs (both eliminated); it loses when attacked, and is beaten by a Rat.</li>
+        <li><strong>Mine</strong> (defence only here) destroys its attacker but self-destructs (both eliminated); beaten by a Rat.</li>
+        <li><strong>Furor Tigris</strong> &rarr; Colonel Tiger strikes two different targets; each is resolved separately, and Tiger is eliminated if it loses either.</li>
+      </ul>
+
+      <h3>Winning</h3>
+      <ul>
+        <li>The game ends the instant a <strong>General Lion</strong> is eliminated — whoever eliminated it wins.</li>
+      </ul>
+
+      <div class="rules-note">
+        This referee only reports <strong>survived</strong> / <strong>eliminated</strong> — it never reveals a card's identity.
+        Unique Skills other than Furor Tigris (Lionheart, Grizzly Guard, etc.) are applied by the players themselves.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirmation modal -->
+<div id="modal-overlay" class="modal-overlay">
+  <div class="modal">
+    <div id="modal-body"></div>
+    <div id="modal-actions" class="modal-actions"></div>
+  </div>
+</div>
+
+<script>
+  const CARDS = {
+    lion:    { name: 'General Lion',     emoji: '🦁', rank: 7, stars: '★★★★★★★' },
+    tiger:   { name: 'Colonel Tiger',    emoji: '🐯', rank: 6, stars: '★★★★★★' },
+    bear:    { name: 'Major Bear',       emoji: '🐻', rank: 5, stars: '★★★★★' },
+    boar:    { name: 'Captain Boar',     emoji: '🐗', rank: 4, stars: '★★★★' },
+    wolf:    { name: 'Lieutenant Wolf',  emoji: '🐺', rank: 3, stars: '★★★' },
+    cat:     { name: 'Sergeant Cat',     emoji: '🐱', rank: 2, stars: '★★' },
+    rat:     { name: 'Commando Rat',     emoji: '🐀', rank: 1, stars: '★' },
+    missile: { name: 'Mini Missile',     emoji: '🚀', rank: null },
+    mine:    { name: 'Micro Mine',       emoji: '💣', rank: null },
+  };
+  const ATTACKER_IDS = ['lion','tiger','bear','boar','wolf','cat','rat','missile']; // Mine can't attack
+  const DEFENDER_IDS = ['lion','tiger','bear','boar','wolf','cat','rat','missile','mine'];
+
+  // --- State (reset every resolution) ---
+  let attackerId = null;
+  let attackerHighlight = null; // visual tick on the attacker screen (before confirm)
+  let furor = false;          // Furor Tigris active (Colonel Tiger attacks two targets)
+  let defenderPicks = [];     // 1 defender normally, 2 in Furor Tigris (in selection order)
+
+  function requiredDefenders() { return furor ? 2 : 1; }
+
+  // --- Attack resolution per P.A.W.S. Protocol "Resolving an Attack" rules ---
+  // Returns { atk: 'survived'|'eliminated', def: 'survived'|'eliminated' }
+  function resolve(a, d) {
+    const SURV = 'survived', ELIM = 'eliminated';
+    // Rat vs Lion / Mine / Missile: Rat always wins (either direction)
+    if (a === 'rat' && (d === 'lion' || d === 'mine' || d === 'missile')) return { atk: SURV, def: ELIM };
+    if (d === 'rat' && (a === 'lion' || a === 'mine' || a === 'missile')) return { atk: ELIM, def: SURV };
+
+    // Missile attacking (already excluded vs Rat above): wins but self-destructs -> both eliminated
+    if (a === 'missile') return { atk: ELIM, def: ELIM };
+
+    // Defender is a Mine: Mine wins when attacked but is eliminated after -> both eliminated
+    if (d === 'mine') return { atk: ELIM, def: ELIM };
+
+    // Defender is a Missile: Missile always loses when attacked
+    if (d === 'missile') return { atk: SURV, def: ELIM };
+
+    // Both are ranked animals now.
+    // Lion vs Lion: attacker always wins
+    if (a === 'lion' && d === 'lion') return { atk: SURV, def: ELIM };
+
+    const ra = CARDS[a].rank, rd = CARDS[d].rank;
+    if (ra === rd) return { atk: ELIM, def: ELIM };   // equal rank -> both eliminated
+    if (ra > rd)   return { atk: SURV, def: ELIM };   // higher rank eliminates lower
+    return { atk: ELIM, def: SURV };
+  }
+
+  // --- Modal ---
+  function subFor(c) {
+    return c.rank
+      ? `<span style="color:var(--gold)">${c.rank} · ${c.stars}</span>`
+      : `<span style="color:var(--muted)">Weaponry</span>`;
+  }
+  function cardBig(c) {
+    return `<div class="modal-emoji">${c.emoji}</div><div class="modal-name">${c.name}</div><div class="modal-sub">${subFor(c)}</div>`;
+  }
+  function cardRow(c, tag) {
+    const sub = c.rank
+      ? `<span style="color:var(--gold)">${c.rank} · ${c.stars}</span>`
+      : `<span style="color:var(--muted)">Weaponry</span>`;
+    return `<div class="modal-card-row"><span class="emoji">${c.emoji}</span>` +
+      `<span class="mc-meta"><span class="mc-name">${c.name}</span><span class="mc-sub">${sub}</span></span>` +
+      `${tag ? `<span class="mc-tag">${tag}</span>` : ''}</div>`;
+  }
+  function openModal({ bodyHtml, buttons }) {
+    document.getElementById('modal-body').innerHTML = bodyHtml;
+    const act = document.getElementById('modal-actions');
+    act.innerHTML = '';
+    buttons.forEach(b => {
+      const btn = document.createElement('button');
+      btn.className = 'modal-btn ' + (b.kind || 'primary');
+      btn.textContent = b.label;
+      btn.onclick = b.onClick;
+      act.appendChild(btn);
+    });
+    document.getElementById('modal-overlay').classList.add('show');
+  }
+  function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('show');
+  }
+
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo(0, 0);
+  }
+
+  // --- Attacker pick + confirmation ---
+  function buildAttackerList() {
+    const el = document.getElementById('attacker-list');
+    el.innerHTML = '';
+    ATTACKER_IDS.forEach(id => {
+      const c = CARDS[id];
+      const selected = attackerHighlight === id;
+      const btn = document.createElement('button');
+      btn.className = 'card-btn' + (selected ? ' selected' : '');
+      const meta = c.rank
+        ? `<span class="cname">${c.name}</span><span class="stars">${c.rank} · ${c.stars}</span>`
+        : `<span class="cname">${c.name}</span><span class="weapon-tag">Weaponry</span>`;
+      const badge = selected ? `<span class="pick-badge">✓</span>` : '';
+      btn.innerHTML = `<span class="emoji">${c.emoji}</span><span class="meta">${meta}</span>${badge}`;
+      btn.onclick = () => pickAttacker(id);
+      el.appendChild(btn);
+    });
+  }
+  function pickAttacker(id) {
+    attackerHighlight = id;
+    buildAttackerList();
+    const c = CARDS[id];
+    const buttons = [];
+    if (id === 'tiger') {
+      buttons.push({ label: '⚔️ Furor Tigris — attack 2 targets', kind: 'accent', onClick: () => confirmAttacker('tiger', true) });
+      buttons.push({ label: 'Single attack', kind: 'primary', onClick: () => confirmAttacker('tiger', false) });
+    } else {
+      buttons.push({ label: 'Confirm', kind: 'primary', onClick: () => confirmAttacker(id, false) });
+    }
+    buttons.push({ label: 'Cancel', kind: 'ghost', onClick: cancelAttackerPick });
+    const bodyHtml = cardBig(c) +
+      `<div class="modal-msg">${id === 'tiger' ? 'Choose how Colonel Tiger attacks.' : 'Attack with this card?'}</div>`;
+    openModal({ bodyHtml, buttons });
+  }
+  function cancelAttackerPick() {
+    attackerHighlight = null;
+    closeModal();
+    buildAttackerList();
+  }
+  function confirmAttacker(id, useFuror) {
+    attackerId = id;
+    furor = useFuror;
+    attackerHighlight = null;
+    closeModal();
+    showScreen('screen-pass');
+  }
+
+  // --- Defender phase (multi-select) ---
+  function startDefenderPhase() {
+    defenderPicks = [];
+    document.getElementById('furor-banner').style.display = furor ? 'flex' : 'none';
+    refreshDefender();
+    showScreen('screen-defender');
+  }
+  function toggleDefender(id) {
+    const required = requiredDefenders();
+    const idx = defenderPicks.indexOf(id);
+    if (idx !== -1) {
+      defenderPicks.splice(idx, 1);            // deselect
+    } else if (defenderPicks.length < required) {
+      defenderPicks.push(id);                  // select
+    } else {
+      return;                                  // required count already met — ignore
+    }
+    refreshDefender();
+    // As soon as the required number of defenders is selected, ask to confirm.
+    if (defenderPicks.length === required) openDefenderConfirm();
+  }
+  function refreshDefender() {
+    // heading
+    const h = document.getElementById('defender-heading');
+    h.innerHTML = furor
+      ? `<span class="who">Defender</span>, pick 2 targets <span class="count">(${defenderPicks.length}/2)</span>`
+      : `<span class="who">Defender</span>, pick your card`;
+    // list
+    const el = document.getElementById('defender-list');
+    el.innerHTML = '';
+    DEFENDER_IDS.forEach(id => {
+      const c = CARDS[id];
+      const pos = defenderPicks.indexOf(id);
+      const selected = pos !== -1;
+      const btn = document.createElement('button');
+      btn.className = 'card-btn' + (selected ? ' selected' : '');
+      const meta = c.rank
+        ? `<span class="cname">${c.name}</span><span class="stars">${c.rank} · ${c.stars}</span>`
+        : `<span class="cname">${c.name}</span><span class="weapon-tag">Weaponry</span>`;
+      const badge = selected ? `<span class="pick-badge">${furor ? (pos + 1) : '✓'}</span>` : '';
+      btn.innerHTML = `<span class="emoji">${c.emoji}</span><span class="meta">${meta}</span>${badge}`;
+      btn.onclick = () => toggleDefender(id);
+      el.appendChild(btn);
+    });
+  }
+  function openDefenderConfirm() {
+    let bodyHtml;
+    if (furor) {
+      const rows = defenderPicks.map((id, i) => cardRow(CARDS[id], `Target ${i + 1}`)).join('');
+      bodyHtml = `<div class="modal-title">Confirm your 2 targets</div><div class="modal-cards">${rows}</div>`;
+    } else {
+      // Single defender — mirror the attacker confirmation exactly.
+      bodyHtml = cardBig(CARDS[defenderPicks[0]]) + `<div class="modal-msg">Defend with this card?</div>`;
+    }
+    openModal({
+      bodyHtml,
+      buttons: [
+        { label: 'Confirm', kind: 'primary', onClick: proceedAfterDefender },
+        { label: 'Cancel', kind: 'ghost', onClick: cancelDefenderPick },
+      ],
+    });
+  }
+  function cancelDefenderPick() {
+    defenderPicks.pop();   // undo the pick that triggered this confirmation
+    closeModal();
+    refreshDefender();
+  }
+  function proceedAfterDefender() {
+    closeModal();
+    showScreen('screen-show-result');
+  }
+
+  // --- Result ---
+  function goResult() {
+    renderResult();
+    showScreen('screen-result');
+  }
+  function outcomeCard(roleTop, roleName, status) {
+    const el = document.createElement('div');
+    el.className = 'outcome ' + status;
+    el.innerHTML =
+      `<div class="role">${roleTop}<span class="name">${roleName}</span></div>` +
+      `<div class="status"><div class="icon">${status === 'survived' ? '🛡️' : '💥'}</div>` +
+      `<div class="word">${status === 'survived' ? 'SURVIVED' : 'ELIMINATED'}</div></div>`;
+    return el;
+  }
+  function renderResult() {
+    const body = document.getElementById('result-body');
+    const title = document.getElementById('result-title');
+    body.innerHTML = '';
+
+    if (!furor) {
+      const r = resolve(attackerId, defenderPicks[0]);
+      title.textContent = (r.atk === 'eliminated' && r.def === 'eliminated') ? 'Both cards eliminated' : 'Attack resolved';
+      const row = document.createElement('div');
+      row.className = 'outcome-row';
+      row.appendChild(outcomeCard("Attacker's", 'card', r.atk));
+      row.appendChild(outcomeCard("Defender's", 'card', r.def));
+      body.appendChild(row);
+      return;
+    }
+
+    // Furor Tigris: Colonel Tiger resolves against both targets simultaneously.
+    title.textContent = 'Furor Tigris resolved';
+    const r1 = resolve('tiger', defenderPicks[0]);
+    const r2 = resolve('tiger', defenderPicks[1]);
+    const tigerStatus = (r1.atk === 'survived' && r2.atk === 'survived') ? 'survived' : 'eliminated';
+
+    const atk = outcomeCard('Attacker', '🐯 Colonel Tiger', tigerStatus);
+    atk.classList.add('full');
+    body.appendChild(atk);
+
+    const row = document.createElement('div');
+    row.className = 'outcome-row';
+    row.appendChild(outcomeCard('Target 1', 'card', r1.def));
+    row.appendChild(outcomeCard('Target 2', 'card', r2.def));
+    body.appendChild(row);
+  }
+
+  function reset() {
+    attackerId = null;
+    attackerHighlight = null;
+    furor = false;
+    defenderPicks = [];
+    closeModal();
+    buildAttackerList();
+    showScreen('screen-attacker');
+  }
+
+  // --- Rules cheat-sheet ---
+  function buildRulesRanks() {
+    const el = document.getElementById('rules-ranks');
+    el.innerHTML = DEFENDER_IDS.map(id => {
+      const c = CARDS[id];
+      const right = c.rank
+        ? `<span class="rs">${c.stars} · ${c.rank}</span>`
+        : `<span class="rs" style="color:var(--muted)">Weaponry</span>`;
+      return `<div class="rank-row"><span class="emoji">${c.emoji}</span><span class="rn">${c.name}</span>${right}</div>`;
+    }).join('');
+  }
+  function openRules() {
+    document.getElementById('rules-overlay').classList.add('show');
+    document.documentElement.classList.add('no-scroll'); // lock the page behind the overlay
+    document.getElementById('rules-overlay').scrollTop = 0;
+  }
+  function closeRules() {
+    document.getElementById('rules-overlay').classList.remove('show');
+    document.documentElement.classList.remove('no-scroll');
+  }
+
+  // init
+  buildAttackerList();
+  buildRulesRanks();
+</script>
+</body>
+</html>
