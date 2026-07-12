@@ -274,6 +274,18 @@
   }
 
   footer { text-align: center; color: var(--muted); font-size: 0.68rem; margin-top: 18px; }
+  /* Terse privacy cue directly under a pick-screen heading (above the fold) */
+  .privacy-cue {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: -6px 0 14px;
+    color: var(--muted);
+    font-size: 0.78rem;
+    line-height: 1.3;
+  }
+  /* Prominent privacy reminder on the hand-off screen */
+  .pass-note { color: var(--gold); font-size: 0.9rem; margin: 2px 0 0; }
 
   /* Rules cheat-sheet */
   .topbar { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 2px; }
@@ -427,6 +439,7 @@
   <section id="screen-attacker" class="screen active">
     <div class="step-label">Attacker</div>
     <h2><span class="who">Attacker</span>, pick your card</h2>
+    <p class="privacy-cue">🔒 Keep the screen to yourself — your opponent shouldn't see your pick.</p>
     <div class="setting-row">
       <span class="sr-label"><span class="sr-title">Players</span><span class="sr-sub">Team size</span></span>
       <div class="seg" id="mode-seg">
@@ -439,7 +452,6 @@
       <div class="seg" id="attacker-buff-seg"></div>
     </div>
     <div id="attacker-list" class="card-list"></div>
-    <footer>Hold the device so your opponent can't see your choice.</footer>
   </section>
 
   <!-- STEP 2: Hand device to defender -->
@@ -448,6 +460,7 @@
       <div class="lock">🔒</div>
       <h2>Attacker locked in</h2>
       <p>The attacker's card is now hidden.<br>Pass the device to the <strong style="color:var(--gold)">Defender</strong>.</p>
+      <p class="pass-note">🔒 Defender — shield the screen while you pick.</p>
       <div class="actions">
         <button class="big-btn" onclick="startDefenderPhase()">I'm the Defender — Continue</button>
       </div>
@@ -467,12 +480,13 @@
       <span>🐯</span><span id="furor-banner-text">Furor Tigris — Colonel Tiger strikes two targets.</span>
     </div>
     <h2 id="defender-heading"><span class="who">Defender</span>, pick your card</h2>
+    <p class="privacy-cue">🔒 Keep the screen to yourself — your opponent shouldn't see your pick.</p>
     <div class="setting-row">
       <span class="sr-label"><span class="sr-title">🦁 Lionheart</span><span class="sr-sub">My units gain +rank</span></span>
       <div class="seg" id="defender-buff-seg"></div>
     </div>
     <div id="defender-list" class="card-list"></div>
-    <footer id="defender-foot">Hold the device so your opponent can't see your choice.</footer>
+    <footer id="defender-foot"></footer>
   </section>
 
   <!-- STEP 4: Hand device back to attacker before revealing -->
@@ -792,10 +806,10 @@
     h.innerHTML = furor
       ? `<span class="who">Defender</span>, pick 2 targets <span class="count">(${defenderPicks.length}/2)</span>`
       : `<span class="who">Defender</span>, pick your card`;
-    // footer hint — in Furor the badge doubles as a remove control
+    // footer hint — only in Furor, where the badge doubles as a remove control
     document.getElementById('defender-foot').textContent = furor
       ? "Tap a card to add a target; tap its ✕ badge to remove one."
-      : "Hold the device so your opponent can't see your choice.";
+      : "";
     // list
     const el = document.getElementById('defender-list');
     el.innerHTML = '';
