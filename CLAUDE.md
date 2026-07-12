@@ -80,11 +80,12 @@ The authoritative implementation is the `resolve(a, d)` function in `index.html`
 
    All other skills (Grizzly Guard, Tusk Rampage, etc.) remain out of scope — players apply
    them manually. Keep `resolve()` free of other skill effects.
-4. **No persistence / no history — one deliberate exception.** Keep resolutions stateless (no
-   history; game mode is in-memory and resets on refresh). The **only** thing persisted across
-   page loads is the **light/dark theme**, stored in `localStorage` under `paws-umpire:theme`
-   (theme is a preference, not game state). All reads/writes are wrapped in `try/catch` so the
-   app still works where storage is unavailable (e.g. `file://`, private mode).
+4. **No persistence / no history — two deliberate exceptions.** Keep resolutions stateless (no
+   history of past attacks). The only things persisted across page loads are the **light/dark
+   theme** (`localStorage['paws-umpire:theme']`) and the **1v1/2v2 mode**
+   (`localStorage['paws-umpire:mode']`) — both are preferences, not per-resolution game state.
+   All reads/writes are wrapped in `try/catch` so the app still works where storage is
+   unavailable (e.g. `file://`, private mode).
 5. **No third-party dependencies.** All CSS/JS is inline in `index.html`; the only local asset
    references are same-repo files (`manifest.webmanifest`, `icons/`, `images/`). No CDNs, web
    fonts, analytics, or runtime network calls. The only outbound links are the two external

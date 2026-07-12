@@ -8,10 +8,9 @@ or is *eliminated*.
 Supports both **1v1** and **2v2** via a mode toggle (2v2: each team has two of every card;
 Lionheart can stack to +2, and Furor Tigris may hit two of the same card).
 
-Everything is client-side — no build step, no server, and no state kept between resolutions.
-The 1v1/2v2 game mode persists for the session (resets on refresh), and there's a **light/dark
-theme toggle** whose choice is remembered across visits (the only thing saved, via `localStorage`;
-it defaults to your device's preference).
+Everything is client-side — no build step, no server, and no history kept between resolutions.
+Two preferences are remembered across visits via `localStorage`: the **1v1/2v2 mode** and a
+**light/dark theme toggle** (theme defaults to your device's preference).
 
 ## How it works
 

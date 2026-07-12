@@ -633,7 +633,11 @@
   const DEFENDER_IDS = ['lion','tiger','bear','boar','wolf','cat','rat','missile','mine'];
 
   // --- State (reset every resolution) ---
-  let mode = '1v1';           // '1v1' or '2v2' — a session setting, not reset per resolution
+  let mode = '1v1';           // '1v1' or '2v2' — remembered in localStorage, not reset per resolution
+  try {
+    const savedMode = localStorage.getItem('paws-umpire:mode');
+    if (savedMode === '1v1' || savedMode === '2v2') mode = savedMode;
+  } catch (e) {}
   let attackerId = null;
   let attackerHighlight = null; // visual tick on the attacker screen (before confirm)
   let furor = false;          // Furor Tigris active (Colonel Tiger attacks two targets)
@@ -662,6 +666,7 @@
   function setDefenderBuff(v) { defenderBuff = v; renderBuffControl('defender-buff-seg', v, setDefenderBuff); refreshDefender(); }
   function setMode(m) {
     mode = m;
+    try { localStorage.setItem('paws-umpire:mode', m); } catch (e) {}
     document.querySelectorAll('#mode-seg .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
     attackerBuff = 0;
     defenderBuff = 0;
@@ -1012,6 +1017,7 @@
 
   // init
   applyThemeUI();
+  document.querySelectorAll('#mode-seg .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
   renderBuffControl('attacker-buff-seg', attackerBuff, setAttackerBuff);
   buildAttackerList();
   buildRulesRanks();
