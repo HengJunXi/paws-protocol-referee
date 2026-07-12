@@ -17,14 +17,14 @@
 <script>
   // Set the theme before first paint (avoids a flash): stored choice, else OS preference.
   (function () {
-    var t = 'dark';
+    var theme = 'dark';
     try {
-      t = localStorage.getItem('paws-umpire:theme')
+      theme = localStorage.getItem('paws-umpire:theme')
         || (window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
     } catch (e) {}
-    document.documentElement.dataset.theme = t;
+    document.documentElement.dataset.theme = theme;
     var m = document.querySelector('meta[name="theme-color"]');
-    if (m) m.content = (t === 'light') ? '#f4f5f7' : '#1a1d21';
+    if (m) m.content = (theme === 'light') ? '#f4f5f7' : '#1a1d21';
   })();
 </script>
 <style>
@@ -331,7 +331,7 @@
     text-transform: uppercase;
     cursor: pointer;
   }
-  .theme-btn { font-size: 0.95rem; padding: 4px 10px; line-height: 1; }
+  .theme-btn, .lang-btn { font-size: 0.95rem; padding: 4px 10px; line-height: 1; }
   .rules-overlay {
     position: fixed;
     inset: 0;
@@ -407,6 +407,26 @@
   }
   .about-link:active { background: var(--panel-2); }
 
+  /* Language picker overlay (reuses rules-overlay/rules-sheet chrome) */
+  .lang-list { display: flex; flex-direction: column; gap: 10px; }
+  .lang-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 14px;
+    color: var(--text);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+  }
+  .lang-option.active { border-color: var(--gold-ink); background: var(--panel-2); }
+  .lang-option .check { color: var(--gold-ink); font-weight: 800; }
+
   /* Confirmation modal */
   .modal-overlay {
     position: fixed;
@@ -460,29 +480,30 @@
 <div class="app">
   <div class="topbar">
     <button class="pill-btn theme-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle light / dark" aria-label="Toggle light or dark theme">🌙</button>
-    <button class="pill-btn" onclick="openAbout()">About</button>
-    <button class="pill-btn" onclick="openRules()">Rules</button>
+    <button class="pill-btn lang-btn" id="lang-btn" onclick="openLang()" aria-label="Change language">🌐</button>
+    <button class="pill-btn" id="nav-about-btn" onclick="openAbout()">About</button>
+    <button class="pill-btn" id="nav-rules-btn" onclick="openRules()">Rules</button>
   </div>
   <header>
-    <h1>P.A.W.S. Protocol</h1>
-    <div class="sub">Umpire</div>
+    <h1 id="app-title">P.A.W.S. Protocol</h1>
+    <div class="sub" id="app-sub">Umpire</div>
   </header>
 
   <main>
   <!-- STEP 1: Attacker picks -->
   <section id="screen-attacker" class="screen active">
-    <div class="step-label">Attacker</div>
-    <h2><span class="who">Attacker</span>, pick your card</h2>
-    <p class="privacy-cue">🔒 Keep the screen to yourself — your opponent shouldn't see your pick.</p>
+    <div class="step-label" id="attacker-step-label">Attacker</div>
+    <h2><span class="who" id="attacker-heading-who">Attacker</span><span id="attacker-heading-rest">, pick your card</span></h2>
+    <p class="privacy-cue" id="attacker-privacy-cue">🔒 Keep the screen to yourself — your opponent shouldn't see your pick.</p>
     <div class="setting-row">
-      <span class="sr-label"><span class="sr-title">Players</span><span class="sr-sub">Team size</span></span>
+      <span class="sr-label"><span class="sr-title" id="players-title">Players</span><span class="sr-sub" id="players-sub">Team size</span></span>
       <div class="seg" id="mode-seg">
         <button type="button" class="seg-btn active" data-mode="1v1" onclick="setMode('1v1')">1v1</button>
         <button type="button" class="seg-btn" data-mode="2v2" onclick="setMode('2v2')">2v2</button>
       </div>
     </div>
     <div class="setting-row">
-      <span class="sr-label"><span class="sr-title">🦁 Lionheart</span><span class="sr-sub">My units gain +rank</span></span>
+      <span class="sr-label"><span class="sr-title" id="lionheart-title-a">🦁 Lionheart</span><span class="sr-sub" id="lionheart-sub-a">My units gain +rank</span></span>
       <div class="seg" id="attacker-buff-seg"></div>
     </div>
     <div id="attacker-list" class="card-list"></div>
@@ -492,11 +513,11 @@
   <section id="screen-pass" class="screen">
     <div class="pass">
       <div class="lock">🔒</div>
-      <h2>Attacker locked in</h2>
-      <p>The attacker's card is now hidden.<br>Pass the device to the <strong style="color:var(--gold-ink)">Defender</strong>.</p>
-      <p class="pass-note">🔒 Defender — shield the screen while you pick.</p>
+      <h2 id="pass-heading">Attacker locked in</h2>
+      <p id="pass-body">The attacker's card is now hidden.<br>Pass the device to the <strong style="color:var(--gold-ink)">Defender</strong>.</p>
+      <p class="pass-note" id="pass-note">🔒 Defender — shield the screen while you pick.</p>
       <div class="actions">
-        <button class="big-btn" onclick="startDefenderPhase()">I'm the Defender — Continue</button>
+        <button class="big-btn" id="pass-continue-btn" onclick="startDefenderPhase()">I'm the Defender — Continue</button>
       </div>
     </div>
   </section>
@@ -504,7 +525,7 @@
   <!-- STEP 3: Defender picks (multi-select in Furor Tigris) -->
   <section id="screen-defender" class="screen">
     <div class="step-head">
-      <div class="step-label">Defender</div>
+      <div class="step-label" id="defender-step-label">Defender</div>
       <span class="mode-chip" id="defender-mode-chip">1v1</span>
     </div>
     <div id="atk-buff-banner" class="info-banner" style="display:none">
@@ -514,9 +535,9 @@
       <span>🐯</span><span id="furor-banner-text">Furor Tigris — Colonel Tiger strikes two targets.</span>
     </div>
     <h2 id="defender-heading"><span class="who">Defender</span>, pick your card</h2>
-    <p class="privacy-cue">🔒 Keep the screen to yourself — your opponent shouldn't see your pick.</p>
+    <p class="privacy-cue" id="defender-privacy-cue">🔒 Keep the screen to yourself — your opponent shouldn't see your pick.</p>
     <div class="setting-row">
-      <span class="sr-label"><span class="sr-title">🦁 Lionheart</span><span class="sr-sub">My units gain +rank</span></span>
+      <span class="sr-label"><span class="sr-title" id="lionheart-title-d">🦁 Lionheart</span><span class="sr-sub" id="lionheart-sub-d">My units gain +rank</span></span>
       <div class="seg" id="defender-buff-seg"></div>
     </div>
     <div id="defender-list" class="card-list"></div>
@@ -527,26 +548,26 @@
   <section id="screen-show-result" class="screen">
     <div class="pass">
       <div class="lock">📱</div>
-      <h2>Resolution ready</h2>
-      <p>Defender, show the device to the <strong style="color:var(--gold-ink)">Attacker</strong>, then reveal the outcome together.</p>
+      <h2 id="show-result-heading">Resolution ready</h2>
+      <p id="show-result-body">Defender, show the device to the <strong style="color:var(--gold-ink)">Attacker</strong>, then reveal the outcome together.</p>
       <div class="actions">
-        <button class="big-btn" onclick="goResult()">Show Result</button>
+        <button class="big-btn" id="show-result-btn" onclick="goResult()">Show Result</button>
       </div>
     </div>
   </section>
 
   <!-- RESULT -->
   <section id="screen-result" class="screen">
-    <div class="step-label">Result</div>
+    <div class="step-label" id="result-step-label">Result</div>
     <div class="result-head">
       <div class="title" id="result-title">Resolution</div>
     </div>
     <div id="result-body"></div>
-    <div class="privacy-note">
+    <div class="privacy-note" id="result-privacy-note">
       Card identities are never revealed by this umpire — only whether each card survives or is eliminated.
     </div>
     <div class="spacer"></div>
-    <button class="big-btn" onclick="reset()">New Resolution</button>
+    <button class="big-btn" id="new-resolution-btn" onclick="reset()">New Resolution</button>
   </section>
   </main>
 </div>
@@ -555,32 +576,20 @@
 <div id="rules-overlay" class="rules-overlay">
   <div class="rules-sheet">
     <div class="rules-head">
-      <div class="rules-title">Umpire Rules</div>
+      <div class="rules-title" id="rules-title">Umpire Rules</div>
       <button class="rules-close" onclick="closeRules()" aria-label="Close">✕</button>
     </div>
     <div class="rules-content">
-      <h3>Cards &amp; ranks</h3>
+      <h3 id="rules-h-ranks">Cards &amp; ranks</h3>
       <div id="rules-ranks"></div>
 
-      <h3>Resolving an attack</h3>
-      <ul>
-        <li><strong>Higher rank</strong> eliminates lower rank.</li>
-        <li><strong>Equal rank</strong> (same card) &rarr; both eliminated.</li>
-        <li><strong>Lion vs Lion</strong> &rarr; the attacker wins.</li>
-        <li><strong>Rat</strong> vs Lion, Mine or Missile &rarr; Rat always wins.</li>
-        <li><strong>Missile</strong> attacking destroys the target but self-destructs (both eliminated); when attacked it is destroyed — except by a Mine, which it survives. Beaten by a Rat.</li>
-        <li><strong>Mine</strong> attacking always self-destructs and the defender survives (two Mines eliminate each other); when attacked, it destroys its attacker but self-destructs (both eliminated). Beaten by a Rat.</li>
-        <li><strong>Furor Tigris</strong> &rarr; Colonel Tiger strikes two targets, each resolved separately; Tiger is eliminated if it loses either. In 1v1 the targets must differ; in 2v2 they may be the same card.</li>
-        <li><strong>Lionheart</strong> &rarr; each activated General Lion gives that side's units +1 rank (up to +1 in 1v1, +2 in 2v2 with both Lions). Applies to the rank comparison only.</li>
-      </ul>
+      <h3 id="rules-h-resolving">Resolving an attack</h3>
+      <ul id="rules-resolving-list"></ul>
 
-      <h3>Winning</h3>
-      <ul>
-        <li><strong>1v1:</strong> the game ends the instant a <strong>General Lion</strong> is eliminated — whoever eliminated it wins.</li>
-        <li><strong>2v2:</strong> a team is defeated only when <strong>both</strong> of its General Lions are eliminated; losing just one keeps the game going.</li>
-      </ul>
+      <h3 id="rules-h-winning">Winning</h3>
+      <ul id="rules-winning-list"></ul>
 
-      <div class="rules-note">
+      <div class="rules-note" id="rules-note">
         This umpire only reports <strong>survived</strong> / <strong>eliminated</strong> — it never reveals a card's identity.
         Furor Tigris and Lionheart are handled here; other Unique Skills (Grizzly Guard, etc.) are applied by the players themselves.
       </div>
@@ -592,23 +601,36 @@
 <div id="about-overlay" class="rules-overlay">
   <div class="rules-sheet">
     <div class="rules-head">
-      <div class="rules-title">About</div>
+      <div class="rules-title" id="about-title">About</div>
       <button class="rules-close" onclick="closeAbout()" aria-label="Close">✕</button>
     </div>
     <div class="rules-content">
       <img class="about-img" src="images/paws-protocol-box.avif" alt="P.A.W.S. Protocol board game box">
-      <p class="about-lead"><strong>P.A.W.S. Protocol</strong> is a tactical 1v1 / 2v2 card game by <strong>Atelier Rayfish</strong>.</p>
-      <p class="about-lead">This app lets you play the game's <strong style="color:var(--gold-ink)">umpire mode without needing an actual third person</strong> — it privately resolves each attack in the umpire's place, revealing only which card survives or is eliminated. <strong style="color:var(--accent-ink)">You must own the original board game to play</strong> — this is only an assisting tool.</p>
+      <p class="about-lead" id="about-lead-1"><strong>P.A.W.S. Protocol</strong> is a tactical 1v1 / 2v2 card game by <strong>Atelier Rayfish</strong>.</p>
+      <p class="about-lead" id="about-lead-2">This app lets you play the game's <strong style="color:var(--gold-ink)">umpire mode without needing an actual third person</strong> — it privately resolves each attack in the umpire's place, revealing only which card survives or is eliminated. <strong style="color:var(--accent-ink)">You must own the original board game to play</strong> — this is only an assisting tool.</p>
       <div class="about-links">
-        <a class="about-link" href="https://www.rayfishgames.com/pawsprotocol" target="_blank" rel="noopener noreferrer">🌐 Official page — Atelier Rayfish</a>
-        <a class="about-link" href="https://boardgamegeek.com/boardgame/474041/paws-protocol" target="_blank" rel="noopener noreferrer">🎲 BoardGameGeek</a>
+        <a class="about-link" id="about-link-official" href="https://www.rayfishgames.com/pawsprotocol" target="_blank" rel="noopener noreferrer">🌐 Official page — Atelier Rayfish</a>
+        <a class="about-link" id="about-link-bgg" href="https://boardgamegeek.com/boardgame/474041/paws-protocol" target="_blank" rel="noopener noreferrer">🎲 BoardGameGeek</a>
       </div>
-      <div class="rules-note">
+      <div class="rules-note" id="about-note">
         This website is an <strong>unofficial, fan-made tool</strong>. It is not associated with,
         endorsed by, or affiliated with P.A.W.S. Protocol or Atelier Rayfish. It exists only to
         assist play of the original board game by acting as an umpire. Please support the creators
         and buy the game via the links above.
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Language picker -->
+<div id="lang-overlay" class="rules-overlay">
+  <div class="rules-sheet">
+    <div class="rules-head">
+      <div class="rules-title" id="lang-title">Language</div>
+      <button class="rules-close" onclick="closeLang()" aria-label="Close">✕</button>
+    </div>
+    <div class="rules-content">
+      <div id="lang-list" class="lang-list"></div>
     </div>
   </div>
 </div>
@@ -622,16 +644,137 @@
 </div>
 
 <script>
+  // --- i18n ---------------------------------------------------------------
+  // One flat dictionary per language. Only 'en' ships today; adding a
+  // language is a pure data change: add a key to STRINGS and it appears in
+  // the language picker automatically (see LANG_NAMES / renderLangList).
+  const STRINGS = {
+    en: {
+      navAbout: 'About',
+      navRules: 'Rules',
+      appTitle: 'P.A.W.S. Protocol',
+      appSub: 'Umpire',
+
+      cardName_lion: 'General Lion',
+      cardName_tiger: 'Colonel Tiger',
+      cardName_bear: 'Major Bear',
+      cardName_boar: 'Captain Boar',
+      cardName_wolf: 'Lieutenant Wolf',
+      cardName_cat: 'Sergeant Cat',
+      cardName_rat: 'Commando Rat',
+      cardName_missile: 'Mini Missile',
+      cardName_mine: 'Micro Mine',
+      weaponry: 'Weaponry',
+
+      attackerStepLabel: 'Attacker',
+      attackerHeadingWho: 'Attacker',
+      attackerHeadingRest: ', pick your card',
+      privacyCue: "🔒 Keep the screen to yourself — your opponent shouldn't see your pick.",
+      playersTitle: 'Players',
+      playersSub: 'Team size',
+      lionheartTitle: '🦁 Lionheart',
+      lionheartSub: 'My units gain +rank',
+      buffOff: 'Off',
+
+      passHeading: 'Attacker locked in',
+      passBody: "The attacker's card is now hidden.<br>Pass the device to the <strong style=\"color:var(--gold-ink)\">Defender</strong>.",
+      passNote: '🔒 Defender — shield the screen while you pick.',
+      passContinueBtn: "I'm the Defender — Continue",
+
+      defenderStepLabel: 'Defender',
+      defenderHeadingSingle: '<span class="who">Defender</span>, pick your card',
+      defenderHeadingFuror: (n) => `<span class="who">Defender</span>, pick 2 targets <span class="count">(${n}/2)</span>`,
+      defenderFootFuror: "Tap a card to add a target; tap its ✕ badge to remove one.",
+      atkBuffText: (n) => `Attacker's Lionheart is active — their unit(s) get +${n} rank.`,
+      furorBannerDupe: 'Furor Tigris — Colonel Tiger strikes two targets (they may be the same card).',
+      furorBannerNoDupe: 'Furor Tigris — Colonel Tiger strikes two different targets.',
+      removeTargetTitle: 'Remove target',
+
+      showResultHeading: 'Resolution ready',
+      showResultBody: 'Defender, show the device to the <strong style="color:var(--gold-ink)">Attacker</strong>, then reveal the outcome together.',
+      showResultBtn: 'Show Result',
+
+      resultStepLabel: 'Result',
+      resultTitleDefault: 'Resolution',
+      resultPrivacyNote: 'Card identities are never revealed by this umpire — only whether each card survives or is eliminated.',
+      newResolutionBtn: 'New Resolution',
+      bothEliminated: 'Both cards eliminated',
+      attackResolved: 'Attack resolved',
+      furorResolved: 'Furor Tigris resolved',
+      attackersCard: "Attacker's",
+      defendersCard: "Defender's",
+      roleCard: 'card',
+      roleAttacker: 'Attacker',
+      target: (n) => `Target ${n}`,
+      survived: 'SURVIVED',
+      eliminated: 'ELIMINATED',
+      lionheartChipOn: (n) => `🦁 Lionheart +${n}`,
+      lionheartChipOff: 'No Lionheart',
+
+      modalFurorBtn: '🐯 Furor Tigris — attack 2 targets',
+      modalSingleAttackBtn: 'Single attack',
+      modalConfirmBtn: 'Confirm',
+      modalCancelBtn: 'Cancel',
+      modalChooseTigerAttack: 'Choose how Colonel Tiger attacks.',
+      modalAttackWithThis: 'Attack with this card?',
+      modalDefendWithThis: 'Defend with this card?',
+      modalConfirmTargets: 'Confirm your 2 targets',
+      modalBuffNote: (n) => `🦁 Lionheart active — +${n} rank`,
+
+      rulesTitle: 'Umpire Rules',
+      rulesHRanks: 'Cards &amp; ranks',
+      rulesHResolving: 'Resolving an attack',
+      rulesHWinning: 'Winning',
+      rulesResolving: [
+        '<strong>Higher rank</strong> eliminates lower rank.',
+        '<strong>Equal rank</strong> (same card) &rarr; both eliminated.',
+        '<strong>Lion vs Lion</strong> &rarr; the attacker wins.',
+        '<strong>Rat</strong> vs Lion, Mine or Missile &rarr; Rat always wins.',
+        '<strong>Missile</strong> attacking destroys the target but self-destructs (both eliminated); when attacked it is destroyed — except by a Mine, which it survives. Beaten by a Rat.',
+        '<strong>Mine</strong> attacking always self-destructs and the defender survives (two Mines eliminate each other); when attacked, it destroys its attacker but self-destructs (both eliminated). Beaten by a Rat.',
+        '<strong>Furor Tigris</strong> &rarr; Colonel Tiger strikes two targets, each resolved separately; Tiger is eliminated if it loses either. In 1v1 the targets must differ; in 2v2 they may be the same card.',
+        '<strong>Lionheart</strong> &rarr; each activated General Lion gives that side\'s units +1 rank (up to +1 in 1v1, +2 in 2v2 with both Lions). Applies to the rank comparison only.',
+      ],
+      rulesWinning: [
+        '<strong>1v1:</strong> the game ends the instant a <strong>General Lion</strong> is eliminated — whoever eliminated it wins.',
+        '<strong>2v2:</strong> a team is defeated only when <strong>both</strong> of its General Lions are eliminated; losing just one keeps the game going.',
+      ],
+      rulesNote: 'This umpire only reports <strong>survived</strong> / <strong>eliminated</strong> — it never reveals a card\'s identity. Furor Tigris and Lionheart are handled here; other Unique Skills (Grizzly Guard, etc.) are applied by the players themselves.',
+
+      aboutTitle: 'About',
+      aboutLead1: '<strong>P.A.W.S. Protocol</strong> is a tactical 1v1 / 2v2 card game by <strong>Atelier Rayfish</strong>.',
+      aboutLead2: 'This app lets you play the game\'s <strong style="color:var(--gold-ink)">umpire mode without needing an actual third person</strong> — it privately resolves each attack in the umpire\'s place, revealing only which card survives or is eliminated. <strong style="color:var(--accent-ink)">You must own the original board game to play</strong> — this is only an assisting tool.',
+      aboutLinkOfficial: '🌐 Official page — Atelier Rayfish',
+      aboutLinkBgg: '🎲 BoardGameGeek',
+      aboutNote: 'This website is an <strong>unofficial, fan-made tool</strong>. It is not associated with, endorsed by, or affiliated with P.A.W.S. Protocol or Atelier Rayfish. It exists only to assist play of the original board game by acting as an umpire. Please support the creators and buy the game via the links above.',
+
+      langTitle: 'Language',
+    },
+  };
+  const LANG_NAMES = { en: 'English' };
+
+  let lang = 'en';
+  try {
+    const savedLang = localStorage.getItem('paws-umpire:lang');
+    if (savedLang && STRINGS[savedLang]) lang = savedLang;
+  } catch (e) {}
+
+  function t(key, ...args) {
+    const dict = STRINGS[lang] || STRINGS.en;
+    const entry = (key in dict) ? dict[key] : STRINGS.en[key];
+    return typeof entry === 'function' ? entry(...args) : entry;
+  }
+
   const CARDS = {
-    lion:    { name: 'General Lion',     emoji: '🦁', rank: 7, stars: '★★★★★★★' },
-    tiger:   { name: 'Colonel Tiger',    emoji: '🐯', rank: 6, stars: '★★★★★★' },
-    bear:    { name: 'Major Bear',       emoji: '🐻', rank: 5, stars: '★★★★★' },
-    boar:    { name: 'Captain Boar',     emoji: '🐗', rank: 4, stars: '★★★★' },
-    wolf:    { name: 'Lieutenant Wolf',  emoji: '🐺', rank: 3, stars: '★★★' },
-    cat:     { name: 'Sergeant Cat',     emoji: '🐱', rank: 2, stars: '★★' },
-    rat:     { name: 'Commando Rat',     emoji: '🐀', rank: 1, stars: '★' },
-    missile: { name: 'Mini Missile',     emoji: '🚀', rank: null },
-    mine:    { name: 'Micro Mine',       emoji: '💣', rank: null },
+    lion:    { nameKey: 'cardName_lion',    emoji: '🦁', rank: 7, stars: '★★★★★★★' },
+    tiger:   { nameKey: 'cardName_tiger',   emoji: '🐯', rank: 6, stars: '★★★★★★' },
+    bear:    { nameKey: 'cardName_bear',    emoji: '🐻', rank: 5, stars: '★★★★★' },
+    boar:    { nameKey: 'cardName_boar',    emoji: '🐗', rank: 4, stars: '★★★★' },
+    wolf:    { nameKey: 'cardName_wolf',    emoji: '🐺', rank: 3, stars: '★★★' },
+    cat:     { nameKey: 'cardName_cat',     emoji: '🐱', rank: 2, stars: '★★' },
+    rat:     { nameKey: 'cardName_rat',     emoji: '🐀', rank: 1, stars: '★' },
+    missile: { nameKey: 'cardName_missile', emoji: '🚀', rank: null },
+    mine:    { nameKey: 'cardName_mine',    emoji: '💣', rank: null },
   };
   const ATTACKER_IDS = ['lion','tiger','bear','boar','wolf','cat','rat','missile','mine'];
   const DEFENDER_IDS = ['lion','tiger','bear','boar','wolf','cat','rat','missile','mine'];
@@ -661,7 +804,7 @@
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'seg-btn' + (i === value ? ' active' : '');
-      b.textContent = i === 0 ? 'Off' : '+' + i;
+      b.textContent = i === 0 ? t('buffOff') : '+' + i;
       b.onclick = () => onSet(i);
       el.appendChild(b);
     }
@@ -719,7 +862,7 @@
   // star is appended so the buff is visible. Weaponry has no rank, so a buff shows nothing.
   function rankHtml(c, buff) {
     buff = buff || 0;
-    if (!c.rank) return `<span style="color:var(--muted)">Weaponry</span>`;
+    if (!c.rank) return `<span style="color:var(--muted)">${t('weaponry')}</span>`;
     const num = c.rank + buff;
     let buffStars = '';
     for (let i = 0; i < buff; i++) buffStars += `<span class="buff-star" title="Lionheart +1">★</span>`;
@@ -727,14 +870,14 @@
     return `<span style="color:var(--gold-ink)">${num} ·</span> <span style="color:var(--gold)">${c.stars}</span>${buffStars}`;
   }
   function buffNote(n) {
-    return n > 0 ? `<div class="modal-buff">🦁 Lionheart active — +${n} rank</div>` : '';
+    return n > 0 ? `<div class="modal-buff">${t('modalBuffNote', n)}</div>` : '';
   }
   function cardBig(c, buffed) {
-    return `<div class="modal-emoji">${c.emoji}</div><div class="modal-name">${c.name}</div><div class="modal-sub">${rankHtml(c, buffed)}</div>`;
+    return `<div class="modal-emoji">${c.emoji}</div><div class="modal-name">${t(c.nameKey)}</div><div class="modal-sub">${rankHtml(c, buffed)}</div>`;
   }
   function cardRow(c, tag, buffed) {
     return `<div class="modal-card-row"><span class="emoji">${c.emoji}</span>` +
-      `<span class="mc-meta"><span class="mc-name">${c.name}</span><span class="mc-sub">${rankHtml(c, buffed)}</span></span>` +
+      `<span class="mc-meta"><span class="mc-name">${t(c.nameKey)}</span><span class="mc-sub">${rankHtml(c, buffed)}</span></span>` +
       `${tag ? `<span class="mc-tag">${tag}</span>` : ''}</div>`;
   }
   function openModal({ bodyHtml, buttons }) {
@@ -766,12 +909,13 @@
     el.innerHTML = '';
     ATTACKER_IDS.forEach(id => {
       const c = CARDS[id];
+      const name = t(c.nameKey);
       const selected = attackerHighlight === id;
       const btn = document.createElement('button');
       btn.className = 'card-btn' + (selected ? ' selected' : '');
       const meta = c.rank
-        ? `<span class="cname">${c.name}</span><span class="stars">${rankHtml(c, attackerBuff)}</span>`
-        : `<span class="cname">${c.name}</span><span class="weapon-tag">Weaponry</span>`;
+        ? `<span class="cname">${name}</span><span class="stars">${rankHtml(c, attackerBuff)}</span>`
+        : `<span class="cname">${name}</span><span class="weapon-tag">${t('weaponry')}</span>`;
       const badge = selected ? `<span class="pick-badge">✓</span>` : '';
       btn.innerHTML = `<span class="emoji">${c.emoji}</span><span class="meta">${meta}</span>${badge}`;
       btn.onclick = () => pickAttacker(id);
@@ -784,14 +928,14 @@
     const c = CARDS[id];
     const buttons = [];
     if (id === 'tiger') {
-      buttons.push({ label: '🐯 Furor Tigris — attack 2 targets', kind: 'accent', onClick: () => confirmAttacker('tiger', true) });
-      buttons.push({ label: 'Single attack', kind: 'primary', onClick: () => confirmAttacker('tiger', false) });
+      buttons.push({ label: t('modalFurorBtn'), kind: 'accent', onClick: () => confirmAttacker('tiger', true) });
+      buttons.push({ label: t('modalSingleAttackBtn'), kind: 'primary', onClick: () => confirmAttacker('tiger', false) });
     } else {
-      buttons.push({ label: 'Confirm', kind: 'primary', onClick: () => confirmAttacker(id, false) });
+      buttons.push({ label: t('modalConfirmBtn'), kind: 'primary', onClick: () => confirmAttacker(id, false) });
     }
-    buttons.push({ label: 'Cancel', kind: 'ghost', onClick: cancelAttackerPick });
+    buttons.push({ label: t('modalCancelBtn'), kind: 'ghost', onClick: cancelAttackerPick });
     const bodyHtml = cardBig(c, attackerBuff) +
-      `<div class="modal-msg">${id === 'tiger' ? 'Choose how Colonel Tiger attacks.' : 'Attack with this card?'}</div>` +
+      `<div class="modal-msg">${id === 'tiger' ? t('modalChooseTigerAttack') : t('modalAttackWithThis')}</div>` +
       buffNote(attackerBuff);
     openModal({ bodyHtml, buttons });
   }
@@ -815,11 +959,10 @@
     document.getElementById('furor-banner').style.display = furor ? 'flex' : 'none';
     // Show the attacker's Lionheart level (it's announced in-game) so the defender can plan.
     document.getElementById('atk-buff-banner').style.display = attackerBuff > 0 ? 'flex' : 'none';
-    document.getElementById('atk-buff-text').textContent =
-      `Attacker's Lionheart is active — their unit(s) get +${attackerBuff} rank.`;
+    document.getElementById('atk-buff-text').textContent = t('atkBuffText', attackerBuff);
     document.getElementById('furor-banner-text').textContent = allowDupeTargets()
-      ? 'Furor Tigris — Colonel Tiger strikes two targets (they may be the same card).'
-      : 'Furor Tigris — Colonel Tiger strikes two different targets.';
+      ? t('furorBannerDupe')
+      : t('furorBannerNoDupe');
     renderBuffControl('defender-buff-seg', defenderBuff, setDefenderBuff);
     refreshDefender();
     showScreen('screen-defender');
@@ -845,28 +988,29 @@
     // heading
     const h = document.getElementById('defender-heading');
     h.innerHTML = furor
-      ? `<span class="who">Defender</span>, pick 2 targets <span class="count">(${defenderPicks.length}/2)</span>`
-      : `<span class="who">Defender</span>, pick your card`;
+      ? t('defenderHeadingFuror', defenderPicks.length)
+      : t('defenderHeadingSingle');
     // footer hint — only in Furor, where the badge doubles as a remove control
     document.getElementById('defender-foot').textContent = furor
-      ? "Tap a card to add a target; tap its ✕ badge to remove one."
+      ? t('defenderFootFuror')
       : "";
     // list
     const el = document.getElementById('defender-list');
     el.innerHTML = '';
     DEFENDER_IDS.forEach(id => {
       const c = CARDS[id];
+      const name = t(c.nameKey);
       const count = defenderPicks.filter(x => x === id).length;
       const selected = count > 0;
       const btn = document.createElement('button');
       btn.className = 'card-btn' + (selected ? ' selected' : '');
       const meta = c.rank
-        ? `<span class="cname">${c.name}</span><span class="stars">${rankHtml(c, defenderBuff)}</span>`
-        : `<span class="cname">${c.name}</span><span class="weapon-tag">Weaponry</span>`;
+        ? `<span class="cname">${name}</span><span class="stars">${rankHtml(c, defenderBuff)}</span>`
+        : `<span class="cname">${name}</span><span class="weapon-tag">${t('weaponry')}</span>`;
       // In Furor the badge is a remove-one control (✕); single-pick just shows a tick.
       const badge = selected
         ? (furor
-            ? `<span class="pick-badge remove" title="Remove target">${count > 1 ? count + '&nbsp;✕' : '✕'}</span>`
+            ? `<span class="pick-badge remove" title="${t('removeTargetTitle')}">${count > 1 ? count + '&nbsp;✕' : '✕'}</span>`
             : `<span class="pick-badge">✓</span>`)
         : '';
       btn.innerHTML = `<span class="emoji">${c.emoji}</span><span class="meta">${meta}</span>${badge}`;
@@ -885,18 +1029,18 @@
   function openDefenderConfirm() {
     let bodyHtml;
     if (furor) {
-      const rows = defenderPicks.map((id, i) => cardRow(CARDS[id], `Target ${i + 1}`, defenderBuff)).join('');
-      bodyHtml = `<div class="modal-title">Confirm your 2 targets</div><div class="modal-cards">${rows}</div>`;
+      const rows = defenderPicks.map((id, i) => cardRow(CARDS[id], t('target', i + 1), defenderBuff)).join('');
+      bodyHtml = `<div class="modal-title">${t('modalConfirmTargets')}</div><div class="modal-cards">${rows}</div>`;
     } else {
       // Single defender — mirror the attacker confirmation exactly.
-      bodyHtml = cardBig(CARDS[defenderPicks[0]], defenderBuff) + `<div class="modal-msg">Defend with this card?</div>`;
+      bodyHtml = cardBig(CARDS[defenderPicks[0]], defenderBuff) + `<div class="modal-msg">${t('modalDefendWithThis')}</div>`;
     }
     bodyHtml += buffNote(defenderBuff);
     openModal({
       bodyHtml,
       buttons: [
-        { label: 'Confirm', kind: 'primary', onClick: proceedAfterDefender },
-        { label: 'Cancel', kind: 'ghost', onClick: cancelDefenderPick },
+        { label: t('modalConfirmBtn'), kind: 'primary', onClick: proceedAfterDefender },
+        { label: t('modalCancelBtn'), kind: 'ghost', onClick: cancelDefenderPick },
       ],
     });
   }
@@ -921,8 +1065,8 @@
     el.innerHTML =
       `<div class="role">${roleTop}<span class="name">${roleName}</span></div>` +
       `<div class="status"><div class="icon">${status === 'survived' ? '🛡️' : '💥'}</div>` +
-      `<div class="word">${status === 'survived' ? 'SURVIVED' : 'ELIMINATED'}</div></div>` +
-      (showBuff ? `<div class="buff-chip ${buffed ? 'on' : 'off'}">${buffed ? ('🦁 Lionheart +' + buffed) : 'No Lionheart'}</div>` : '');
+      `<div class="word">${status === 'survived' ? t('survived') : t('eliminated')}</div></div>` +
+      (showBuff ? `<div class="buff-chip ${buffed ? 'on' : 'off'}">${buffed ? t('lionheartChipOn', buffed) : t('lionheartChipOff')}</div>` : '');
     return el;
   }
   function renderResult() {
@@ -935,29 +1079,29 @@
 
     if (!furor) {
       const r = resolve(attackerId, defenderPicks[0], attackerBuff, defenderBuff);
-      title.textContent = (r.atk === 'eliminated' && r.def === 'eliminated') ? 'Both cards eliminated' : 'Attack resolved';
+      title.textContent = (r.atk === 'eliminated' && r.def === 'eliminated') ? t('bothEliminated') : t('attackResolved');
       const row = document.createElement('div');
       row.className = 'outcome-row';
-      row.appendChild(outcomeCard("Attacker's", 'card', r.atk, attackerBuff, showBuff));
-      row.appendChild(outcomeCard("Defender's", 'card', r.def, defenderBuff, showBuff));
+      row.appendChild(outcomeCard(t('attackersCard'), t('roleCard'), r.atk, attackerBuff, showBuff));
+      row.appendChild(outcomeCard(t('defendersCard'), t('roleCard'), r.def, defenderBuff, showBuff));
       body.appendChild(row);
       return;
     }
 
     // Furor Tigris: Colonel Tiger resolves against both targets simultaneously.
-    title.textContent = 'Furor Tigris resolved';
+    title.textContent = t('furorResolved');
     const r1 = resolve('tiger', defenderPicks[0], attackerBuff, defenderBuff);
     const r2 = resolve('tiger', defenderPicks[1], attackerBuff, defenderBuff);
     const tigerStatus = (r1.atk === 'survived' && r2.atk === 'survived') ? 'survived' : 'eliminated';
 
-    const atk = outcomeCard('Attacker', '🐯 Colonel Tiger', tigerStatus, attackerBuff, showBuff);
+    const atk = outcomeCard(t('roleAttacker'), '🐯 ' + t('cardName_tiger'), tigerStatus, attackerBuff, showBuff);
     atk.classList.add('full');
     body.appendChild(atk);
 
     const row = document.createElement('div');
     row.className = 'outcome-row';
-    row.appendChild(outcomeCard('Target 1', 'card', r1.def, defenderBuff, showBuff));
-    row.appendChild(outcomeCard('Target 2', 'card', r2.def, defenderBuff, showBuff));
+    row.appendChild(outcomeCard(t('target', 1), t('roleCard'), r1.def, defenderBuff, showBuff));
+    row.appendChild(outcomeCard(t('target', 2), t('roleCard'), r2.def, defenderBuff, showBuff));
     body.appendChild(row);
   }
 
@@ -981,8 +1125,8 @@
       const c = CARDS[id];
       const right = c.rank
         ? `<span class="rs"><span style="color:var(--gold)">${c.stars}</span> · ${c.rank}</span>`
-        : `<span class="rs" style="color:var(--muted)">Weaponry</span>`;
-      return `<div class="rank-row"><span class="emoji">${c.emoji}</span><span class="rn">${c.name}</span>${right}</div>`;
+        : `<span class="rs" style="color:var(--muted)">${t('weaponry')}</span>`;
+      return `<div class="rank-row"><span class="emoji">${c.emoji}</span><span class="rn">${t(c.nameKey)}</span>${right}</div>`;
     }).join('');
   }
   function openRules() {
@@ -1004,6 +1148,39 @@
     document.documentElement.classList.remove('no-scroll');
   }
 
+  // --- Language picker ---
+  function renderLangList() {
+    const el = document.getElementById('lang-list');
+    el.innerHTML = '';
+    Object.keys(STRINGS).forEach(code => {
+      const active = code === lang;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'lang-option' + (active ? ' active' : '');
+      btn.innerHTML = `<span>${LANG_NAMES[code] || code}</span>${active ? '<span class="check">✓</span>' : ''}`;
+      btn.onclick = () => setLang(code);
+      el.appendChild(btn);
+    });
+  }
+  function openLang() {
+    renderLangList();
+    document.getElementById('lang-overlay').classList.add('show');
+    document.documentElement.classList.add('no-scroll');
+    document.getElementById('lang-overlay').scrollTop = 0;
+  }
+  function closeLang() {
+    document.getElementById('lang-overlay').classList.remove('show');
+    document.documentElement.classList.remove('no-scroll');
+  }
+  function setLang(l) {
+    if (!STRINGS[l]) return;
+    lang = l;
+    try { localStorage.setItem('paws-umpire:lang', l); } catch (e) {}
+    applyStaticText();
+    renderLangList();
+    closeLang();
+  }
+
   // --- Theme (light / dark), remembered in localStorage ---
   function applyThemeUI() {
     const light = document.documentElement.dataset.theme === 'light';
@@ -1019,12 +1196,78 @@
     applyThemeUI();
   }
 
+  // --- Apply translated text to all static (non-list) markup, then
+  // re-render every screen/overlay whose content is built dynamically. ---
+  function applyStaticText() {
+    document.getElementById('nav-about-btn').textContent = t('navAbout');
+    document.getElementById('nav-rules-btn').textContent = t('navRules');
+    document.getElementById('app-title').textContent = t('appTitle');
+    document.getElementById('app-sub').textContent = t('appSub');
+
+    document.getElementById('attacker-step-label').textContent = t('attackerStepLabel');
+    document.getElementById('attacker-heading-who').textContent = t('attackerHeadingWho');
+    document.getElementById('attacker-heading-rest').textContent = t('attackerHeadingRest');
+    document.getElementById('attacker-privacy-cue').textContent = t('privacyCue');
+    document.getElementById('players-title').textContent = t('playersTitle');
+    document.getElementById('players-sub').textContent = t('playersSub');
+    document.getElementById('lionheart-title-a').textContent = t('lionheartTitle');
+    document.getElementById('lionheart-sub-a').textContent = t('lionheartSub');
+
+    document.getElementById('pass-heading').textContent = t('passHeading');
+    document.getElementById('pass-body').innerHTML = t('passBody');
+    document.getElementById('pass-note').textContent = t('passNote');
+    document.getElementById('pass-continue-btn').textContent = t('passContinueBtn');
+
+    document.getElementById('defender-step-label').textContent = t('defenderStepLabel');
+    document.getElementById('defender-privacy-cue').textContent = t('privacyCue');
+    document.getElementById('lionheart-title-d').textContent = t('lionheartTitle');
+    document.getElementById('lionheart-sub-d').textContent = t('lionheartSub');
+
+    document.getElementById('show-result-heading').textContent = t('showResultHeading');
+    document.getElementById('show-result-body').innerHTML = t('showResultBody');
+    document.getElementById('show-result-btn').textContent = t('showResultBtn');
+
+    document.getElementById('result-step-label').textContent = t('resultStepLabel');
+    if (!attackerId) document.getElementById('result-title').textContent = t('resultTitleDefault');
+    document.getElementById('result-privacy-note').textContent = t('resultPrivacyNote');
+    document.getElementById('new-resolution-btn').textContent = t('newResolutionBtn');
+
+    document.getElementById('rules-title').textContent = t('rulesTitle');
+    document.getElementById('rules-h-ranks').innerHTML = t('rulesHRanks');
+    document.getElementById('rules-h-resolving').textContent = t('rulesHResolving');
+    document.getElementById('rules-h-winning').textContent = t('rulesHWinning');
+    document.getElementById('rules-resolving-list').innerHTML = t('rulesResolving').map(li => `<li>${li}</li>`).join('');
+    document.getElementById('rules-winning-list').innerHTML = t('rulesWinning').map(li => `<li>${li}</li>`).join('');
+    document.getElementById('rules-note').innerHTML = t('rulesNote');
+
+    document.getElementById('about-title').textContent = t('aboutTitle');
+    document.getElementById('about-lead-1').innerHTML = t('aboutLead1');
+    document.getElementById('about-lead-2').innerHTML = t('aboutLead2');
+    document.getElementById('about-link-official').textContent = t('aboutLinkOfficial');
+    document.getElementById('about-link-bgg').textContent = t('aboutLinkBgg');
+    document.getElementById('about-note').innerHTML = t('aboutNote');
+
+    document.getElementById('lang-title').textContent = t('langTitle');
+
+    // Re-render dynamically-built content so it picks up the new language.
+    renderBuffControl('attacker-buff-seg', attackerBuff, setAttackerBuff);
+    buildAttackerList();
+    buildRulesRanks();
+    if (document.getElementById('screen-defender').classList.contains('active')) {
+      document.getElementById('atk-buff-text').textContent = t('atkBuffText', attackerBuff);
+      document.getElementById('furor-banner-text').textContent = allowDupeTargets() ? t('furorBannerDupe') : t('furorBannerNoDupe');
+      renderBuffControl('defender-buff-seg', defenderBuff, setDefenderBuff);
+      refreshDefender();
+    }
+    if (document.getElementById('screen-result').classList.contains('active')) {
+      renderResult();
+    }
+  }
+
   // init
   applyThemeUI();
   document.querySelectorAll('#mode-seg .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
-  renderBuffControl('attacker-buff-seg', attackerBuff, setAttackerBuff);
-  buildAttackerList();
-  buildRulesRanks();
+  applyStaticText();
 </script>
 </body>
 </html>

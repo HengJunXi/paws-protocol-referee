@@ -80,17 +80,25 @@ The authoritative implementation is the `resolve(a, d)` function in `index.html`
 
    All other skills (Grizzly Guard, Tusk Rampage, etc.) remain out of scope — players apply
    them manually. Keep `resolve()` free of other skill effects.
-4. **No persistence / no history — two deliberate exceptions.** Keep resolutions stateless (no
+4. **No persistence / no history — three deliberate exceptions.** Keep resolutions stateless (no
    history of past attacks). The only things persisted across page loads are the **light/dark
-   theme** (`localStorage['paws-umpire:theme']`) and the **1v1/2v2 mode**
-   (`localStorage['paws-umpire:mode']`) — both are preferences, not per-resolution game state.
-   All reads/writes are wrapped in `try/catch` so the app still works where storage is
-   unavailable (e.g. `file://`, private mode).
+   theme** (`localStorage['paws-umpire:theme']`), the **1v1/2v2 mode**
+   (`localStorage['paws-umpire:mode']`), and the **language** (`localStorage['paws-umpire:lang']`)
+   — all three are preferences, not per-resolution game state. All reads/writes are wrapped in
+   `try/catch` so the app still works where storage is unavailable (e.g. `file://`, private mode).
 5. **No third-party dependencies.** All CSS/JS is inline in `index.html`; the only local asset
    references are same-repo files (`manifest.webmanifest`, `icons/`, `images/`). No CDNs, web
    fonts, analytics, or runtime network calls. The only outbound links are the two external
    `<a href>`s on the About page (Atelier Rayfish, BGG), which open in a new tab. It runs on the
    GitHub Pages free tier as-is. (No service worker, so it is not offline-cached.)
+6. **i18n.** All user-facing text is looked up via `t(key, ...args)` against the `STRINGS`
+   dictionary (currently only `en` ships). Static markup text is set by `applyStaticText()`
+   (id-targeted, run on init and on language change); dynamically-built content (card lists,
+   modals, rules sheet, result screen) already calls `t()` directly inside its own render
+   functions. `CARDS` entries hold a `nameKey` (not a hardcoded name) resolved via `t()`.
+   Adding a language is a pure data change — add a key to `STRINGS` and `LANG_NAMES`; the
+   language picker (`renderLangList`) enumerates `STRINGS` automatically. `setLang()` persists
+   the choice to `localStorage['paws-umpire:lang']` (see invariant 4) and re-renders in place.
 
 ## Flow
 
