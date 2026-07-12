@@ -89,8 +89,11 @@ The authoritative implementation is the `resolve(a, d)` function in `index.html`
 
 The attacker screen has a **1v1 / 2v2** mode toggle (`#mode-seg`, `setMode`); `mode` persists
 across resolutions. The defender screen shows the locked mode as a read-only chip
-(`#defender-mode-chip`). Both the attacker and defender screens carry a **🦁 Lionheart**
-segmented control (Off / +1 / +2, capped by `maxStacks()`) that sets that side's buff before picking.
+(`#defender-mode-chip`) and, when the attacker used Lionheart, a banner with the attacker's
+`+N` level (`#atk-buff-banner`) — this is fine to reveal because Lionheart is announced in-game
+(it does not expose the attacker's card). Both the attacker and defender screens carry a
+**🦁 Lionheart** segmented control (Off / +1 / +2, capped by `maxStacks()`) that sets that
+side's buff before picking.
 
 Attacker picks (9 options) → **confirmation modal** (shows the picked character, plus a
 Lionheart note if active; picking Colonel Tiger offers "Single attack" or "Furor Tigris —
