@@ -50,12 +50,21 @@ The authoritative implementation is the `resolve(a, d)` function in `index.html`
    defender survives — except **Mine vs Mine**, where both are eliminated. `ATTACKER_IDS` and
    `DEFENDER_IDS` are now identical (all 9 cards). Note the Missile exception: a Missile
    attacked by a Mine *survives* (the Mine is eliminated).
-3. **Raw resolution only, with one supported skill.** `resolve()` implements raw card-vs-card
-   combat and must stay that way. The **only** Unique Skill wired into the UI is Furor Tigris
-   (Colonel Tiger attacks two different targets; each is resolved independently via `resolve()`,
-   and Tiger is eliminated if it loses either matchup). All other skills (Lionheart, Grizzly
-   Guard, etc.) remain out of scope — players apply them manually. Do not fold other skill
-   effects into `resolve()`.
+3. **Raw resolution, with two supported skills.** `resolve(a, d, aBuff, dBuff)` implements raw
+   card-vs-card combat. Two Unique Skills are wired into the UI:
+   - **Furor Tigris** — Colonel Tiger attacks two different targets; each is resolved
+     independently via `resolve()`, and Tiger is eliminated if it loses either matchup.
+   - **Lionheart** — a per-side "+1 rank" toggle (`attackerBuff` / `defenderBuff`) on the
+     attacker and defender screens. The +1 applies **only** in the rank-comparison branch of
+     `resolve()`; every special case (Rat, Missile, Mine, Lion vs Lion) stays rank-independent,
+     so attacker-Lion still beats defender-Lion regardless of buffs, and a buffed Tiger (6+1)
+     can tie an unbuffed Lion (7) → both eliminated. Toggling re-renders that side's list so
+     ranks show the buffed number plus a highlighted `.buff-star`; the result screen surfaces
+     each side's state via the Lionheart chips (see Flow). Rank display and the modals share
+     one helper, `rankHtml(c, buffed)`, so nothing drifts from the logic.
+
+   All other skills (Grizzly Guard, Tusk Rampage, etc.) remain out of scope — players apply
+   them manually. Keep `resolve()` free of other skill effects.
 4. **No persistence / no history.** Keep it stateless across resolutions and page loads.
 5. **No third-party dependencies.** All CSS/JS is inline in `index.html`; the only external
    references are same-repo assets (`manifest.webmanifest`, the `icons/` files). No CDNs,
@@ -64,8 +73,12 @@ The authoritative implementation is the `resolve(a, d)` function in `index.html`
 
 ## Flow
 
-Attacker picks (9 options) → **confirmation modal** (shows the picked character; picking
-Colonel Tiger offers "Single attack" or "Furor Tigris — 2 targets") → attacker locked, hand
+Both the attacker and defender screens carry a **🦁 Lionheart (+1 rank)** checkbox that sets
+that side's buff before picking.
+
+Attacker picks (9 options) → **confirmation modal** (shows the picked character, plus a
+Lionheart note if active; picking Colonel Tiger offers "Single attack" or "Furor Tigris —
+2 targets") → attacker locked, hand
 device to Defender (no going back to change the attacker once passed) → Defender **selects**
 their card(s): tap to select/deselect, single mode needs 1, Furor Tigris needs 2 different
 targets (`defenderPicks` holds them in order). There is no confirm button — the **confirmation
@@ -80,9 +93,12 @@ so it can't drift from the resolution logic.
 Result screens:
 - Single: two outcome cards (Attacker's / Defender's), both-eliminated possible.
 - Furor Tigris: Colonel Tiger's aggregate outcome (full-width) plus Target 1 / Target 2.
+- Lionheart chips: each outcome card shows a `🦁 Lionheart +1` / `No Lionheart` chip, but
+  only when at least one side used it (`showBuff = attackerBuff || defenderBuff`).
 
 Screen IDs: `screen-attacker`, `screen-pass`, `screen-defender`, `screen-show-result`,
-`screen-result`. State: `attackerId`, `furor`, `defenderPicks[]` (reset each resolution).
+`screen-result`. State: `attackerId`, `furor`, `defenderPicks[]`, `attackerBuff`,
+`defenderBuff` (all reset each resolution).
 
 ## Conventions
 
@@ -90,7 +106,8 @@ Screen IDs: `screen-attacker`, `screen-pass`, `screen-defender`, `screen-show-re
 - Mobile-first; keep the UI simple. Match the existing dark theme and CSS-variable palette.
 - One typeface: the system font stack on `body`; `button { font-family: inherit }` keeps
   controls on it. "Weaponry" is title-case everywhere. Rank shows as `N · ★…` on the
-  pick/confirm screens and `★… · N` on the rules sheet.
+  pick/confirm screens (via `rankHtml`) and `★… · N` on the rules sheet; a Lionheart buff adds
+  +1 to the number and a highlighted accent `.buff-star`.
 - If you change resolution logic, update the outcome table in `rules/resolving-an-attack.md`
   to match `resolve()`.
 
@@ -106,6 +123,8 @@ Open `index.html` in a browser. Sanity checks:
 - Mine → Lion (or any non-Mine): Mine eliminated, defender survives.
 - Mine → Mine: both eliminated.
 - Mine → Missile: Mine eliminated, Missile survives (Missile's Mine exception).
+- Buffed Tiger (attacker Lionheart) → unbuffed Lion: both eliminated (6+1 ties 7).
+- Attacker Lion → defender Lion with defender Lionheart on: attacker still survives (special).
 - Furor Tigris → Cat + Mine: Tiger eliminated (loses to Mine); Target 1 (Cat) eliminated,
   Target 2 (Mine) eliminated. Second target list must exclude the first pick.
 

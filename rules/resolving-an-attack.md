@@ -52,3 +52,8 @@ but it always loses (it self-destructs when attacking).
 | Any animal → Missile | survives | eliminated |
 | Mine → Mine | eliminated | eliminated |
 | Mine → anything except Mine (incl. Missile) | eliminated | survives |
+
+**Lionheart (+1 rank):** each side has an optional toggle that adds +1 to its own card's rank.
+This only changes the **rank comparison** rows above — every special case stays rank-independent.
+So attacker Lion still beats defender Lion, and a buffed Tiger (6+1) ties an unbuffed Lion (7),
+eliminating each other.

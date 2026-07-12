@@ -11,11 +11,13 @@ Everything is client-side — no build step, no server, no state kept between re
 
 1. **Attacker** picks their card and confirms (all 9 options — Micro Mine may attack, but it
    always loses). Choosing Colonel Tiger offers **Furor Tigris** — attack two different targets.
+   A **🦁 Lionheart** checkbox gives the attacker's unit(s) +1 rank.
 2. The pick is hidden; hand the device to the **Defender**.
 3. **Defender** selects their card — or, under Furor Tigris, two different targets — and confirms
-   (all 9 options available).
+   (all 9 options available). The defender has their own **🦁 Lionheart** +1-rank checkbox.
 4. A hand-off screen prompts the defender to show the device to the attacker, then reveals the
-   result: each card is `SURVIVED` or `ELIMINATED` (both can be eliminated).
+   result: each card is `SURVIVED` or `ELIMINATED` (both can be eliminated). If either side used
+   Lionheart, the result also shows which side(s) had it active.
 
 No card names are ever displayed in the resolution — only outcomes.
 
@@ -42,9 +44,12 @@ No card names are ever displayed in the resolution — only outcomes.
 - **Missile being attacked** → Missile always loses (but *survives* when attacked by a Mine).
 - **Mine being attacked** (except vs Rat) → Mine wins but is eliminated after → both eliminated.
 - **Mine attacking** → Mine always self-destructs and the defender survives; **Mine vs Mine** → both eliminated.
+- **Lionheart** (per-side toggle) → gives that side's unit(s) +1 rank in the rank comparison only.
+  Special cases stay rank-independent, so attacker-Lion still beats defender-Lion, and a buffed
+  Tiger (6+1) can tie an unbuffed Lion (7) → both eliminated.
 
-> Unique Skills (Lionheart, Grizzly Guard, etc.) are **out of scope** — players apply those
-> manually. The referee resolves raw card-vs-card combat only.
+> Two Unique Skills are handled — **Furor Tigris** and **Lionheart**. Other skills (Grizzly
+> Guard, Tusk Rampage, etc.) are out of scope; players apply those manually.
 
 ## Run locally
 

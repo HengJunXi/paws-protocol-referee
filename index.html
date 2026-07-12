@@ -138,6 +138,26 @@
     justify-content: center;
   }
 
+  .buff-toggle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .buff-toggle input { width: 20px; height: 20px; accent-color: var(--gold); flex-shrink: 0; }
+  .buff-toggle .bt-label { display: flex; flex-direction: column; gap: 1px; }
+  .buff-toggle .bt-title { font-size: 0.92rem; font-weight: 600; }
+  .buff-toggle .bt-sub { font-size: 0.72rem; color: var(--muted); }
+  .modal-buff { margin-top: 10px; font-size: 0.82rem; color: var(--gold); }
+  /* The Lionheart "+1" star — accent-colored and glowing so it reads as an added buff */
+  .buff-star { color: var(--accent); text-shadow: 0 0 5px var(--accent); font-weight: 700; margin-left: 3px; }
+
   .spacer { flex: 1; }
 
   .big-btn {
@@ -188,6 +208,17 @@
   .outcome .role .name { display: block; margin-top: 2px; color: var(--gold); font-size: 0.82rem; text-transform: none; letter-spacing: 0; }
   .outcome .status { margin-top: 12px; font-size: 1.1rem; font-weight: 800; letter-spacing: 0.5px; }
   .outcome .icon { font-size: 2rem; }
+  .outcome .buff-chip {
+    display: inline-block;
+    margin-top: 12px;
+    font-size: 0.68rem;
+    letter-spacing: 0.5px;
+    border-radius: 999px;
+    padding: 3px 9px;
+    border: 1px solid var(--line);
+  }
+  .outcome .buff-chip.on { color: var(--accent); border-color: var(--accent); font-weight: 700; }
+  .outcome .buff-chip.off { color: var(--muted); }
   .outcome.survived { border-color: var(--green); }
   .outcome.survived .word { color: var(--green); }
   .outcome.eliminated { border-color: var(--red); }
@@ -337,6 +368,10 @@
   <section id="screen-attacker" class="screen active">
     <div class="step-label">Attacker</div>
     <h2><span class="who">Attacker</span>, pick your card</h2>
+    <label class="buff-toggle">
+      <input type="checkbox" id="attacker-buff" onchange="setAttackerBuff(this.checked)">
+      <span class="bt-label"><span class="bt-title">🦁 Lionheart</span><span class="bt-sub">My units gain +1 rank</span></span>
+    </label>
     <div id="attacker-list" class="card-list"></div>
     <footer>Hold the device so your opponent can't see your choice.</footer>
   </section>
@@ -360,6 +395,10 @@
       <span>⚔️</span><span>Furor Tigris — Colonel Tiger strikes two different targets.</span>
     </div>
     <h2 id="defender-heading"><span class="who">Defender</span>, pick your card</h2>
+    <label class="buff-toggle">
+      <input type="checkbox" id="defender-buff" onchange="setDefenderBuff(this.checked)">
+      <span class="bt-label"><span class="bt-title">🦁 Lionheart</span><span class="bt-sub">My units gain +1 rank</span></span>
+    </label>
     <div id="defender-list" class="card-list"></div>
     <footer>Hold the device so your opponent can't see your choice.</footer>
   </section>
@@ -454,12 +493,18 @@
   let attackerHighlight = null; // visual tick on the attacker screen (before confirm)
   let furor = false;          // Furor Tigris active (Colonel Tiger attacks two targets)
   let defenderPicks = [];     // 1 defender normally, 2 in Furor Tigris (in selection order)
+  let attackerBuff = false;   // Lionheart on the attacker's side: their unit(s) gain +1 rank
+  let defenderBuff = false;   // Lionheart on the defender's side: their unit(s) gain +1 rank
+  function setAttackerBuff(on) { attackerBuff = on; buildAttackerList(); }   // re-render to show +1
+  function setDefenderBuff(on) { defenderBuff = on; refreshDefender(); }     // re-render to show +1
 
   function requiredDefenders() { return furor ? 2 : 1; }
 
   // --- Attack resolution per P.A.W.S. Protocol "Resolving an Attack" rules ---
+  // aBuff / dBuff: Lionheart active on that side (+1 rank). Only affects the rank comparison;
+  // all special cases (Rat, Missile, Mine, Lion vs Lion) are rank-independent and unchanged.
   // Returns { atk: 'survived'|'eliminated', def: 'survived'|'eliminated' }
-  function resolve(a, d) {
+  function resolve(a, d, aBuff, dBuff) {
     const SURV = 'survived', ELIM = 'eliminated';
     // Rat vs Lion / Mine / Missile: Rat always wins (either direction)
     if (a === 'rat' && (d === 'lion' || d === 'mine' || d === 'missile')) return { atk: SURV, def: ELIM };
@@ -483,27 +528,32 @@
     // Lion vs Lion: attacker always wins
     if (a === 'lion' && d === 'lion') return { atk: SURV, def: ELIM };
 
-    const ra = CARDS[a].rank, rd = CARDS[d].rank;
+    // Both are ranked animals; apply the Lionheart +1 to each side's rank if active.
+    const ra = CARDS[a].rank + (aBuff ? 1 : 0);
+    const rd = CARDS[d].rank + (dBuff ? 1 : 0);
     if (ra === rd) return { atk: ELIM, def: ELIM };   // equal rank -> both eliminated
     if (ra > rd)   return { atk: SURV, def: ELIM };   // higher rank eliminates lower
     return { atk: ELIM, def: SURV };
   }
 
   // --- Modal ---
-  function subFor(c) {
-    return c.rank
-      ? `<span style="color:var(--gold)">${c.rank} · ${c.stars}</span>`
-      : `<span style="color:var(--muted)">Weaponry</span>`;
+  // Rank label (gold). When buffed by Lionheart, the number is +1 and a highlighted extra
+  // star is appended so the buff is visible. Weaponry has no rank, so a buff shows nothing.
+  function rankHtml(c, buffed) {
+    if (!c.rank) return `<span style="color:var(--muted)">Weaponry</span>`;
+    const num = c.rank + (buffed ? 1 : 0);
+    const buffStar = buffed ? `<span class="buff-star" title="Lionheart +1">★</span>` : '';
+    return `<span style="color:var(--gold)">${num} · ${c.stars}</span>${buffStar}`;
   }
-  function cardBig(c) {
-    return `<div class="modal-emoji">${c.emoji}</div><div class="modal-name">${c.name}</div><div class="modal-sub">${subFor(c)}</div>`;
+  function buffNote(on) {
+    return on ? `<div class="modal-buff">🦁 Lionheart active — +1 rank</div>` : '';
   }
-  function cardRow(c, tag) {
-    const sub = c.rank
-      ? `<span style="color:var(--gold)">${c.rank} · ${c.stars}</span>`
-      : `<span style="color:var(--muted)">Weaponry</span>`;
+  function cardBig(c, buffed) {
+    return `<div class="modal-emoji">${c.emoji}</div><div class="modal-name">${c.name}</div><div class="modal-sub">${rankHtml(c, buffed)}</div>`;
+  }
+  function cardRow(c, tag, buffed) {
     return `<div class="modal-card-row"><span class="emoji">${c.emoji}</span>` +
-      `<span class="mc-meta"><span class="mc-name">${c.name}</span><span class="mc-sub">${sub}</span></span>` +
+      `<span class="mc-meta"><span class="mc-name">${c.name}</span><span class="mc-sub">${rankHtml(c, buffed)}</span></span>` +
       `${tag ? `<span class="mc-tag">${tag}</span>` : ''}</div>`;
   }
   function openModal({ bodyHtml, buttons }) {
@@ -539,7 +589,7 @@
       const btn = document.createElement('button');
       btn.className = 'card-btn' + (selected ? ' selected' : '');
       const meta = c.rank
-        ? `<span class="cname">${c.name}</span><span class="stars">${c.rank} · ${c.stars}</span>`
+        ? `<span class="cname">${c.name}</span><span class="stars">${rankHtml(c, attackerBuff)}</span>`
         : `<span class="cname">${c.name}</span><span class="weapon-tag">Weaponry</span>`;
       const badge = selected ? `<span class="pick-badge">✓</span>` : '';
       btn.innerHTML = `<span class="emoji">${c.emoji}</span><span class="meta">${meta}</span>${badge}`;
@@ -559,8 +609,9 @@
       buttons.push({ label: 'Confirm', kind: 'primary', onClick: () => confirmAttacker(id, false) });
     }
     buttons.push({ label: 'Cancel', kind: 'ghost', onClick: cancelAttackerPick });
-    const bodyHtml = cardBig(c) +
-      `<div class="modal-msg">${id === 'tiger' ? 'Choose how Colonel Tiger attacks.' : 'Attack with this card?'}</div>`;
+    const bodyHtml = cardBig(c, attackerBuff) +
+      `<div class="modal-msg">${id === 'tiger' ? 'Choose how Colonel Tiger attacks.' : 'Attack with this card?'}</div>` +
+      buffNote(attackerBuff);
     openModal({ bodyHtml, buttons });
   }
   function cancelAttackerPick() {
@@ -613,7 +664,7 @@
       const btn = document.createElement('button');
       btn.className = 'card-btn' + (selected ? ' selected' : '');
       const meta = c.rank
-        ? `<span class="cname">${c.name}</span><span class="stars">${c.rank} · ${c.stars}</span>`
+        ? `<span class="cname">${c.name}</span><span class="stars">${rankHtml(c, defenderBuff)}</span>`
         : `<span class="cname">${c.name}</span><span class="weapon-tag">Weaponry</span>`;
       const badge = selected ? `<span class="pick-badge">${furor ? (pos + 1) : '✓'}</span>` : '';
       btn.innerHTML = `<span class="emoji">${c.emoji}</span><span class="meta">${meta}</span>${badge}`;
@@ -624,12 +675,13 @@
   function openDefenderConfirm() {
     let bodyHtml;
     if (furor) {
-      const rows = defenderPicks.map((id, i) => cardRow(CARDS[id], `Target ${i + 1}`)).join('');
+      const rows = defenderPicks.map((id, i) => cardRow(CARDS[id], `Target ${i + 1}`, defenderBuff)).join('');
       bodyHtml = `<div class="modal-title">Confirm your 2 targets</div><div class="modal-cards">${rows}</div>`;
     } else {
       // Single defender — mirror the attacker confirmation exactly.
-      bodyHtml = cardBig(CARDS[defenderPicks[0]]) + `<div class="modal-msg">Defend with this card?</div>`;
+      bodyHtml = cardBig(CARDS[defenderPicks[0]], defenderBuff) + `<div class="modal-msg">Defend with this card?</div>`;
     }
+    bodyHtml += buffNote(defenderBuff);
     openModal({
       bodyHtml,
       buttons: [
@@ -653,13 +705,14 @@
     renderResult();
     showScreen('screen-result');
   }
-  function outcomeCard(roleTop, roleName, status) {
+  function outcomeCard(roleTop, roleName, status, buffed, showBuff) {
     const el = document.createElement('div');
     el.className = 'outcome ' + status;
     el.innerHTML =
       `<div class="role">${roleTop}<span class="name">${roleName}</span></div>` +
       `<div class="status"><div class="icon">${status === 'survived' ? '🛡️' : '💥'}</div>` +
-      `<div class="word">${status === 'survived' ? 'SURVIVED' : 'ELIMINATED'}</div></div>`;
+      `<div class="word">${status === 'survived' ? 'SURVIVED' : 'ELIMINATED'}</div></div>` +
+      (showBuff ? `<div class="buff-chip ${buffed ? 'on' : 'off'}">${buffed ? '🦁 Lionheart +1' : 'No Lionheart'}</div>` : '');
     return el;
   }
   function renderResult() {
@@ -667,31 +720,34 @@
     const title = document.getElementById('result-title');
     body.innerHTML = '';
 
+    // Only surface the Lionheart chips when at least one side used it.
+    const showBuff = attackerBuff || defenderBuff;
+
     if (!furor) {
-      const r = resolve(attackerId, defenderPicks[0]);
+      const r = resolve(attackerId, defenderPicks[0], attackerBuff, defenderBuff);
       title.textContent = (r.atk === 'eliminated' && r.def === 'eliminated') ? 'Both cards eliminated' : 'Attack resolved';
       const row = document.createElement('div');
       row.className = 'outcome-row';
-      row.appendChild(outcomeCard("Attacker's", 'card', r.atk));
-      row.appendChild(outcomeCard("Defender's", 'card', r.def));
+      row.appendChild(outcomeCard("Attacker's", 'card', r.atk, attackerBuff, showBuff));
+      row.appendChild(outcomeCard("Defender's", 'card', r.def, defenderBuff, showBuff));
       body.appendChild(row);
       return;
     }
 
     // Furor Tigris: Colonel Tiger resolves against both targets simultaneously.
     title.textContent = 'Furor Tigris resolved';
-    const r1 = resolve('tiger', defenderPicks[0]);
-    const r2 = resolve('tiger', defenderPicks[1]);
+    const r1 = resolve('tiger', defenderPicks[0], attackerBuff, defenderBuff);
+    const r2 = resolve('tiger', defenderPicks[1], attackerBuff, defenderBuff);
     const tigerStatus = (r1.atk === 'survived' && r2.atk === 'survived') ? 'survived' : 'eliminated';
 
-    const atk = outcomeCard('Attacker', '🐯 Colonel Tiger', tigerStatus);
+    const atk = outcomeCard('Attacker', '🐯 Colonel Tiger', tigerStatus, attackerBuff, showBuff);
     atk.classList.add('full');
     body.appendChild(atk);
 
     const row = document.createElement('div');
     row.className = 'outcome-row';
-    row.appendChild(outcomeCard('Target 1', 'card', r1.def));
-    row.appendChild(outcomeCard('Target 2', 'card', r2.def));
+    row.appendChild(outcomeCard('Target 1', 'card', r1.def, defenderBuff, showBuff));
+    row.appendChild(outcomeCard('Target 2', 'card', r2.def, defenderBuff, showBuff));
     body.appendChild(row);
   }
 
@@ -700,6 +756,10 @@
     attackerHighlight = null;
     furor = false;
     defenderPicks = [];
+    attackerBuff = false;
+    defenderBuff = false;
+    document.getElementById('attacker-buff').checked = false;
+    document.getElementById('defender-buff').checked = false;
     closeModal();
     buildAttackerList();
     showScreen('screen-attacker');
