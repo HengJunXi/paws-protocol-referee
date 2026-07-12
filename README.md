@@ -1,6 +1,6 @@
 # P.A.W.S. Protocol — Umpire
 
-A dead-simple, mobile-first, single-page web app that acts as an umpire for the board game
+A mobile-first, single-page web app that acts as an umpire for the board game
 **P.A.W.S. Protocol**. It resolves an attack between an attacker card and a defender card
 **without ever revealing either card's identity** — it only reports whether each card *survives*
 or is *eliminated*.
@@ -8,22 +8,21 @@ or is *eliminated*.
 Supports both **1v1** and **2v2** via a mode toggle (2v2: each team has two of every card;
 Lionheart can stack to +2, and Furor Tigris may hit two of the same card).
 
-Everything is client-side — no build step, no server, no state kept between resolutions.
+Everything is client-side — no build step, no server, and no state kept between resolutions,
+except the chosen 1v1/2v2 game mode, which persists for the session and resets on page refresh.
 
 ## How it works
 
-0. On the attacker screen, choose **1v1** or **2v2** (a session setting).
-1. **Attacker** picks their card and confirms (all 9 options — Micro Mine may attack, but it
-   always loses). Choosing Colonel Tiger offers **Furor Tigris** — attack two targets.
-   A **🦁 Lionheart** control adds +1 (or +2 in 2v2) rank to the attacker's unit(s).
-2. The pick is hidden; hand the device to the **Defender**.
-3. **Defender** selects their card — or, under Furor Tigris, two targets (which may be the same
-   card in 2v2) — and confirms. The defender has their own **🦁 Lionheart** control.
-4. A hand-off screen prompts the defender to show the device to the attacker, then reveals the
-   result: each card is `SURVIVED` or `ELIMINATED` (both can be eliminated). If either side used
-   Lionheart, the result also shows which side(s) had it active and at what level.
+Pass-and-play on one shared device:
 
-No card names are ever displayed in the resolution — only outcomes.
+1. Choose the mode (**1v1** or **2v2**) and, as the **Attacker**, secretly pick your card, then
+   hand the device to the Defender.
+2. As the **Defender**, secretly pick your card, then hand the device back.
+3. Reveal the result: each card is **SURVIVED** or **ELIMINATED** — the umpire never shows the
+   cards themselves, only their fate.
+
+The special skills (Furor Tigris, Lionheart) and the full resolution rules are covered below and
+in the app's in-app **Rules** sheet.
 
 ## Cards & ranks
 
@@ -61,6 +60,11 @@ No card names are ever displayed in the resolution — only outcomes.
 ## Run locally
 
 Just open `index.html` in any browser. No dependencies.
+
+## Deployment
+
+Hosted on **GitHub Pages** — a static site with no build step, served from the repository root
+on the `main` branch.
 
 ## Install on a phone (optional)
 
