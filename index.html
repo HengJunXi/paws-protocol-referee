@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" translate="no">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#1a1d21">
+<meta name="google" content="notranslate">
 <meta name="description" content="A pass-and-play umpire for the board game P.A.W.S. Protocol. Resolves an attack between two secretly-picked cards without revealing either card's identity.">
 <title>P.A.W.S. Protocol Umpire</title>
 <!-- Add-to-Home-Screen / installable web app -->
@@ -25,6 +26,14 @@
     document.documentElement.dataset.theme = theme;
     var m = document.querySelector('meta[name="theme-color"]');
     if (m) m.content = (theme === 'light') ? '#f4f5f7' : '#1a1d21';
+  })();
+  // Set <html lang> before first paint too: if this stays "en" while zh-CN content
+  // renders, Chrome/Brave's built-in translate prompt pops up on load.
+  (function () {
+    try {
+      var savedLang = localStorage.getItem('paws-umpire:lang');
+      if (savedLang) document.documentElement.lang = savedLang;
+    } catch (e) {}
   })();
 </script>
 <style>
@@ -750,8 +759,109 @@
 
       langTitle: 'Language',
     },
+    'zh-CN': {
+      navAbout: '关于',
+      navRules: '规则',
+      appTitle: '萌爪协议（P.A.W.S. Protocol）',
+      appSub: '裁判',
+
+      cardName_lion: '金狮将军',
+      cardName_tiger: '狂虎上校',
+      cardName_bear: '巨熊少校',
+      cardName_boar: '凶猪上尉',
+      cardName_wolf: '幽狼中尉',
+      cardName_cat: '灵猫军士',
+      cardName_rat: '狡鼠特兵',
+      cardName_missile: '迷你导弹',
+      cardName_mine: '微型地雷',
+      weaponry: '武装卡',
+
+      attackerStepLabel: '进攻方',
+      attackerHeadingWho: '进攻方',
+      attackerHeadingRest: '，请选择你的卡牌',
+      privacyCue: '🔒 请勿让对手看到屏幕——避免暴露你的选择。',
+      playersTitle: '玩家人数',
+      playersSub: '队伍规模',
+      lionheartTitle: '🦁 凌云狮子心',
+      lionheartSub: '我方单位阶级 +N',
+      buffOff: '关闭',
+
+      passHeading: '进攻方已锁定',
+      passBody: '进攻方的卡牌已隐藏。<br>请将设备交给<strong style="color:var(--gold-ink)">防守方</strong>。',
+      passNote: '🔒 防守方——选择卡牌时请遮挡屏幕。',
+      passContinueBtn: '我是防守方——继续',
+
+      defenderStepLabel: '防守方',
+      defenderHeadingSingle: '<span class="who">防守方</span>，请选择你的卡牌',
+      defenderHeadingFuror: (n) => `<span class="who">防守方</span>，请选择 2 个目标 <span class="count">(${n}/2)</span>`,
+      defenderFootFuror: '点击卡牌以添加目标；点击其 ✕ 徽章以移除。',
+      atkBuffText: (n) => `进攻方已启动凌云狮子心——其单位阶级 +${n}。`,
+      furorBannerDupe: '虎怒雷霆——狂虎上校同时攻击两个目标（可为同一张卡牌）。',
+      furorBannerNoDupe: '虎怒雷霆——狂虎上校同时攻击两个不同的目标。',
+      removeTargetTitle: '移除目标',
+
+      showResultHeading: '结算已就绪',
+      showResultBody: '防守方，请将设备交还给<strong style="color:var(--gold-ink)">进攻方</strong>，然后一起查看结果。',
+      showResultBtn: '显示结果',
+
+      resultStepLabel: '结果',
+      resultTitleDefault: '结算',
+      resultPrivacyNote: '本裁判工具不会透露任何卡牌身份——仅显示存活或被消灭。',
+      newResolutionBtn: '开始新的结算',
+      bothEliminated: '双方卡牌均被消灭',
+      attackResolved: '进攻已结算',
+      furorResolved: '虎怒雷霆已结算',
+      attackersCard: '进攻方的',
+      defendersCard: '防守方的',
+      roleCard: '卡牌',
+      roleAttacker: '进攻方',
+      target: (n) => `目标 ${n}`,
+      survived: '存活',
+      eliminated: '被消灭',
+      lionheartChipOn: (n) => `🦁 凌云狮子心 +${n}`,
+      lionheartChipOff: '未启动凌云狮子心',
+
+      modalFurorBtn: '🐯 虎怒雷霆——攻击 2 个目标',
+      modalSingleAttackBtn: '单次攻击',
+      modalConfirmBtn: '确认',
+      modalCancelBtn: '取消',
+      modalChooseTigerAttack: '请选择狂虎上校的攻击方式。',
+      modalAttackWithThis: '使用此卡牌进攻？',
+      modalDefendWithThis: '使用此卡牌防守？',
+      modalConfirmTargets: '确认你的 2 个目标',
+      modalBuffNote: (n) => `🦁 凌云狮子心已启动——阶级 +${n}`,
+
+      rulesTitle: '裁判规则',
+      rulesHRanks: '卡牌与阶级',
+      rulesHResolving: '进攻结算',
+      rulesHWinning: '胜利条件',
+      rulesResolving: [
+        '<strong>高阶卡牌</strong>获胜，低阶卡牌战败，败者被消灭。',
+        '<strong>同阶卡牌</strong>（相同卡牌）&rarr; 同归于尽，相互消灭。',
+        '<strong>金狮将军对金狮将军</strong> &rarr; 无视阶级，进攻方必然获胜。',
+        '<strong>狡鼠特兵</strong>对金狮将军 / 微型地雷 / 迷你导弹 &rarr; 无视阶级，狡鼠特兵必然获胜。',
+        '<strong>迷你导弹</strong>作为进攻方时必然获胜（对阵狡鼠特兵除外），并在结算后自我摧毁（双方均被消灭）；作为防守方时被攻击必然战败——除非被微型地雷攻击，此时迷你导弹存活。被狡鼠特兵克制。',
+        '<strong>微型地雷</strong>作为进攻方时必然战败，并在结算后被消灭（两枚地雷对战时双方均被消灭）；作为防守方时必然获胜，但结算后自我摧毁（双方均被消灭）。被狡鼠特兵克制。',
+        '<strong>虎怒雷霆</strong> &rarr; 狂虎上校同时攻击两个目标，两次攻击分别结算；只要其中一次战败，狂虎上校即被消灭。1v1 中两个目标必须不同；2v2 中可为同一张卡牌。',
+        '<strong>凌云狮子心</strong> &rarr; 每启动一位金狮将军，己方单位阶级 +1（1v1 最高 +1，2v2 双狮同时启动最高 +2）。仅影响阶级比较。',
+      ],
+      rulesWinning: [
+        '<strong>1v1：</strong>当任何一方的<strong>金狮将军</strong>被消灭时，游戏立即结束——消灭对方金狮将军的玩家获胜。',
+        '<strong>2v2：</strong>只有当一方<strong>两位</strong>金狮将军都被消灭时，该队才算落败；仅损失一位不影响游戏继续。',
+      ],
+      rulesNote: '本裁判工具仅报告<strong>存活</strong> / <strong>被消灭</strong>——绝不透露卡牌身份。虎怒雷霆与凌云狮子心由本工具处理；其他专属技能（如英熊守护等）需由玩家自行执行。',
+
+      aboutTitle: '关于',
+      aboutLead1: '<strong>萌爪协议</strong>（P.A.W.S. Protocol）是由 <strong>雷鱼工坊</strong>（Atelier Rayfish）制作的 1v1 / 2v2 战术卡牌游戏。',
+      aboutLead2: '这个应用让你无需第三人也能体验游戏的<strong style="color:var(--gold-ink)">裁判模式</strong>——它会私下结算每一次进攻，只透露卡牌存活或被消灭。<strong style="color:var(--accent-ink)">你必须拥有原版桌游才能游玩</strong>——本工具仅为辅助之用。',
+      aboutLinkOfficial: '🌐 官方页面 — 雷鱼工坊（Atelier Rayfish）',
+      aboutLinkBgg: '🎲 BoardGameGeek',
+      aboutNote: '本网站是<strong>非官方的粉丝制作工具</strong>，与萌爪协议（P.A.W.S. Protocol）或雷鱼工坊（Atelier Rayfish）没有任何关联、认可或从属关系。它仅用于辅助原版桌游的裁判环节。请支持创作者，通过上方链接购买正版游戏。',
+
+      langTitle: '语言',
+    },
   };
-  const LANG_NAMES = { en: 'English' };
+  const LANG_NAMES = { en: 'English', 'zh-CN': '简体中文' };
 
   let lang = 'en';
   try {
@@ -1176,6 +1286,7 @@
     if (!STRINGS[l]) return;
     lang = l;
     try { localStorage.setItem('paws-umpire:lang', l); } catch (e) {}
+    document.documentElement.lang = l;
     applyStaticText();
     renderLangList();
     closeLang();
@@ -1199,6 +1310,7 @@
   // --- Apply translated text to all static (non-list) markup, then
   // re-render every screen/overlay whose content is built dynamically. ---
   function applyStaticText() {
+    document.title = `${t('appTitle')} ${t('appSub')}`;
     document.getElementById('nav-about-btn').textContent = t('navAbout');
     document.getElementById('nav-rules-btn').textContent = t('navRules');
     document.getElementById('app-title').textContent = t('appTitle');
@@ -1266,6 +1378,7 @@
 
   // init
   applyThemeUI();
+  document.documentElement.lang = lang;
   document.querySelectorAll('#mode-seg .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
   applyStaticText();
 </script>
