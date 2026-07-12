@@ -267,6 +267,7 @@
   .pass h2 .who { color: var(--gold-ink); }
   .pass p { color: var(--muted); margin: 0 0 8px; max-width: 300px; line-height: 1.5; }
   .pass .actions { width: 100%; }
+  .pass footer { margin-top: 0; max-width: 280px; }
 
   /* Result */
   .result-head { text-align: center; margin-bottom: 18px; }
@@ -528,6 +529,7 @@
       <div class="actions">
         <button class="big-btn" id="pass-continue-btn" onclick="startDefenderPhase()">I'm the Defender — Continue</button>
       </div>
+      <footer id="pass-restart-hint">Made a mistake? Refresh (or pull down to refresh) to start over.</footer>
     </div>
   </section>
 
@@ -562,6 +564,7 @@
       <div class="actions">
         <button class="big-btn" id="show-result-btn" onclick="goResult()">Show Result</button>
       </div>
+      <footer id="show-result-restart-hint">Made a mistake? Refresh (or pull down to refresh) to start over.</footer>
     </div>
   </section>
 
@@ -689,6 +692,7 @@
       passBody: "The attacker's card is now hidden.<br>Pass the device to the <strong style=\"color:var(--gold-ink)\">Defender</strong>.",
       passNote: '🔒 Defender — shield the screen while you pick.',
       passContinueBtn: "I'm the Defender — Continue",
+      restartHint: 'Made a mistake? Refresh (or pull down to refresh) to start over the resolution from the beginning.',
 
       defenderStepLabel: 'Defender',
       defenderHeadingSingle: '<span class="who">Defender</span>, pick your card',
@@ -790,6 +794,7 @@
       passBody: '进攻方的卡牌已隐藏。<br>请将设备交给<strong style="color:var(--gold-ink)">防守方</strong>。',
       passNote: '🔒 防守方——选择卡牌时请遮挡屏幕。',
       passContinueBtn: '我是防守方——继续',
+      restartHint: '选错了？刷新页面（或下拉刷新）即可从头重新开始本次结算。',
 
       defenderStepLabel: '防守方',
       defenderHeadingSingle: '<span class="who">防守方</span>，请选择你的卡牌',
@@ -1329,6 +1334,7 @@
     document.getElementById('pass-body').innerHTML = t('passBody');
     document.getElementById('pass-note').textContent = t('passNote');
     document.getElementById('pass-continue-btn').textContent = t('passContinueBtn');
+    document.getElementById('pass-restart-hint').textContent = t('restartHint');
 
     document.getElementById('defender-step-label').textContent = t('defenderStepLabel');
     document.getElementById('defender-privacy-cue').textContent = t('privacyCue');
@@ -1338,6 +1344,7 @@
     document.getElementById('show-result-heading').textContent = t('showResultHeading');
     document.getElementById('show-result-body').innerHTML = t('showResultBody');
     document.getElementById('show-result-btn').textContent = t('showResultBtn');
+    document.getElementById('show-result-restart-hint').textContent = t('restartHint');
 
     document.getElementById('result-step-label').textContent = t('resultStepLabel');
     if (!attackerId) document.getElementById('result-title').textContent = t('resultTitleDefault');
