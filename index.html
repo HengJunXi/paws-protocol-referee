@@ -427,7 +427,7 @@
       <span class="mode-chip" id="defender-mode-chip">1v1</span>
     </div>
     <div id="furor-banner" class="furor-banner" style="display:none">
-      <span>⚔️</span><span id="furor-banner-text">Furor Tigris — Colonel Tiger strikes two targets.</span>
+      <span>🐯</span><span id="furor-banner-text">Furor Tigris — Colonel Tiger strikes two targets.</span>
     </div>
     <h2 id="defender-heading"><span class="who">Defender</span>, pick your card</h2>
     <div class="setting-row">
@@ -667,7 +667,7 @@
     const c = CARDS[id];
     const buttons = [];
     if (id === 'tiger') {
-      buttons.push({ label: '⚔️ Furor Tigris — attack 2 targets', kind: 'accent', onClick: () => confirmAttacker('tiger', true) });
+      buttons.push({ label: '🐯 Furor Tigris — attack 2 targets', kind: 'accent', onClick: () => confirmAttacker('tiger', true) });
       buttons.push({ label: 'Single attack', kind: 'primary', onClick: () => confirmAttacker('tiger', false) });
     } else {
       buttons.push({ label: 'Confirm', kind: 'primary', onClick: () => confirmAttacker(id, false) });
