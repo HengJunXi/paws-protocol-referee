@@ -67,4 +67,16 @@ Just open `index.html` in any browser. No dependencies.
 The page is an installable web app (`manifest.webmanifest` + `icons/`). Served over HTTPS,
 open the URL on a phone and use **Add to Home Screen** — it launches fullscreen with the paw
 icon, like a native app. Tap **Rules** in the top-right for the in-app rank & resolution
-cheat-sheet.
+cheat-sheet, or **About** for credits and links to the original game.
+
+## Credits & disclaimer
+
+**P.A.W.S. Protocol** is a board game by **Atelier Rayfish**
+([official page](https://www.rayfishgames.com/pawsprotocol) ·
+[BoardGameGeek](https://boardgamegeek.com/boardgame/474041/paws-protocol)).
+
+This project is an **unofficial, fan-made tool** and is **not associated with, endorsed by, or
+affiliated with** P.A.W.S. Protocol or Atelier Rayfish. It exists only to assist play of the
+original board game by acting as an umpire. Please support the creators and buy the game. The
+box image (`images/paws-protocol-box.avif`) is © Atelier Rayfish and used only to reference the
+original game.

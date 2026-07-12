@@ -22,6 +22,7 @@ dependencies, and no state persisted between resolutions (each attack is fully i
 - `index.html` — the app: HTML + inline CSS + inline JS. This is the deliverable.
 - `manifest.webmanifest` — PWA manifest so the page can be installed / "Add to Home Screen".
 - `icons/` — app icons (`icon-512.png`, `icon-192.png`, `icon-180.png`): gold paw print on the dark bg.
+- `images/paws-protocol-box.avif` — box art for the About page (credit to Atelier Rayfish).
 - `rules/resolving-an-attack.md` — transcription of the "Resolving an Attack" rules card.
 - `rules/unique-skills.md` — transcription of the "Unique Skills" rules card.
 - `README.md` — project overview and usage.
@@ -80,10 +81,11 @@ The authoritative implementation is the `resolve(a, d)` function in `index.html`
    All other skills (Grizzly Guard, Tusk Rampage, etc.) remain out of scope — players apply
    them manually. Keep `resolve()` free of other skill effects.
 4. **No persistence / no history.** Keep it stateless across resolutions and page loads.
-5. **No third-party dependencies.** All CSS/JS is inline in `index.html`; the only external
-   references are same-repo assets (`manifest.webmanifest`, the `icons/` files). No CDNs,
-   web fonts, analytics, or network calls — it runs on the GitHub Pages free tier as-is.
-   (There is no service worker, so it is not offline-cached; it just loads over the network once.)
+5. **No third-party dependencies.** All CSS/JS is inline in `index.html`; the only local asset
+   references are same-repo files (`manifest.webmanifest`, `icons/`, `images/`). No CDNs, web
+   fonts, analytics, or runtime network calls. The only outbound links are the two external
+   `<a href>`s on the About page (Atelier Rayfish, BGG), which open in a new tab. It runs on the
+   GitHub Pages free tier as-is. (No service worker, so it is not offline-cached.)
 
 ## Flow
 
@@ -105,9 +107,13 @@ modal opens automatically** once the required count is selected (single: attacke
 card; Furor: a list of both targets). Cancel pops the triggering pick and returns to selection.
 Confirm → "show the device to the Attacker" gate with a **Show Result** button → result.
 
-A **Rules** button (top-right, `.rules-btn`) opens a full-screen cheat-sheet overlay
-(`#rules-overlay`) at any time; the ranks list is generated from `CARDS` via `buildRulesRanks()`
-so it can't drift from the resolution logic.
+Two pill buttons in a right-aligned row above the header (`.topbar` / `.pill-btn`, in normal
+flow so they don't overlap the title on small screens) open full-screen overlays at any time,
+both using the shared `.rules-overlay` / `.rules-sheet` styles and the `no-scroll` lock:
+- **Rules** (`#rules-overlay`) — the cheat-sheet; its ranks list is generated from `CARDS` via
+  `buildRulesRanks()` so it can't drift from the resolution logic.
+- **About** (`#about-overlay`) — credits and links to the original game (Atelier Rayfish, BGG),
+  the box image, and a disclaimer that this is an unofficial fan-made umpire tool.
 
 Result screens:
 - Single: two outcome cards (Attacker's / Defender's), both-eliminated possible.

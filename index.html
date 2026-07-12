@@ -276,10 +276,8 @@
   footer { text-align: center; color: var(--muted); font-size: 0.68rem; margin-top: 18px; }
 
   /* Rules cheat-sheet */
-  .rules-btn {
-    position: absolute;
-    top: 14px;
-    right: 14px;
+  .topbar { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 2px; }
+  .pill-btn {
     background: transparent;
     border: 1px solid var(--line);
     color: var(--muted);
@@ -289,7 +287,6 @@
     letter-spacing: 1px;
     text-transform: uppercase;
     cursor: pointer;
-    z-index: 5;
   }
   .rules-overlay {
     position: fixed;
@@ -343,6 +340,28 @@
     padding: 12px;
     line-height: 1.55;
   }
+  /* About page */
+  .about-img {
+    width: 100%;
+    max-width: 100%;
+    display: block;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    margin: 4px 0 16px;
+  }
+  .about-lead { font-size: 0.95rem; line-height: 1.5; margin: 0 0 16px; }
+  .about-links { display: flex; flex-direction: column; gap: 10px; }
+  .about-link {
+    display: block;
+    text-decoration: none;
+    color: var(--text);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 14px;
+    font-weight: 600;
+  }
+  .about-link:active { background: var(--panel-2); }
 
   /* Confirmation modal */
   .modal-overlay {
@@ -395,7 +414,10 @@
 </head>
 <body>
 <div class="app">
-  <button class="rules-btn" onclick="openRules()">Rules</button>
+  <div class="topbar">
+    <button class="pill-btn" onclick="openAbout()">About</button>
+    <button class="pill-btn" onclick="openRules()">Rules</button>
+  </div>
   <header>
     <h1>P.A.W.S. Protocol</h1>
     <div class="sub">Umpire</div>
@@ -512,6 +534,31 @@
       <div class="rules-note">
         This umpire only reports <strong>survived</strong> / <strong>eliminated</strong> — it never reveals a card's identity.
         Furor Tigris and Lionheart are handled here; other Unique Skills (Grizzly Guard, etc.) are applied by the players themselves.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- About / credits -->
+<div id="about-overlay" class="rules-overlay">
+  <div class="rules-sheet">
+    <div class="rules-head">
+      <div class="rules-title">About</div>
+      <button class="rules-close" onclick="closeAbout()" aria-label="Close">✕</button>
+    </div>
+    <div class="rules-content">
+      <img class="about-img" src="images/paws-protocol-box.avif" alt="P.A.W.S. Protocol board game box">
+      <p class="about-lead"><strong>P.A.W.S. Protocol</strong> is a tactical 1v1 / 2v2 card game by <strong>Atelier Rayfish</strong>.</p>
+      <p class="about-lead">This app lets you play the game's <strong style="color:var(--gold)">umpire mode without needing an actual third person</strong> — it privately resolves each attack in the umpire's place, revealing only which card survives or is eliminated. <strong style="color:var(--accent)">You must own the original board game to play</strong> — this is only an assisting tool.</p>
+      <div class="about-links">
+        <a class="about-link" href="https://www.rayfishgames.com/pawsprotocol" target="_blank" rel="noopener noreferrer">🌐 Official page — Atelier Rayfish</a>
+        <a class="about-link" href="https://boardgamegeek.com/boardgame/474041/paws-protocol" target="_blank" rel="noopener noreferrer">🎲 BoardGameGeek</a>
+      </div>
+      <div class="rules-note">
+        This website is an <strong>unofficial, fan-made tool</strong>. It is not associated with,
+        endorsed by, or affiliated with P.A.W.S. Protocol or Atelier Rayfish. It exists only to
+        assist play of the original board game by acting as an umpire. Please support the creators
+        and buy the game via the links above.
       </div>
     </div>
   </div>
@@ -890,6 +937,15 @@
   }
   function closeRules() {
     document.getElementById('rules-overlay').classList.remove('show');
+    document.documentElement.classList.remove('no-scroll');
+  }
+  function openAbout() {
+    document.getElementById('about-overlay').classList.add('show');
+    document.documentElement.classList.add('no-scroll');
+    document.getElementById('about-overlay').scrollTop = 0;
+  }
+  function closeAbout() {
+    document.getElementById('about-overlay').classList.remove('show');
     document.documentElement.classList.remove('no-scroll');
   }
 
