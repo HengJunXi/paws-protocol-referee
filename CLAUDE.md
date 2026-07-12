@@ -80,7 +80,11 @@ The authoritative implementation is the `resolve(a, d)` function in `index.html`
 
    All other skills (Grizzly Guard, Tusk Rampage, etc.) remain out of scope — players apply
    them manually. Keep `resolve()` free of other skill effects.
-4. **No persistence / no history.** Keep it stateless across resolutions and page loads.
+4. **No persistence / no history — one deliberate exception.** Keep resolutions stateless (no
+   history; game mode is in-memory and resets on refresh). The **only** thing persisted across
+   page loads is the **light/dark theme**, stored in `localStorage` under `paws-umpire:theme`
+   (theme is a preference, not game state). All reads/writes are wrapped in `try/catch` so the
+   app still works where storage is unavailable (e.g. `file://`, private mode).
 5. **No third-party dependencies.** All CSS/JS is inline in `index.html`; the only local asset
    references are same-repo files (`manifest.webmanifest`, `icons/`, `images/`). No CDNs, web
    fonts, analytics, or runtime network calls. The only outbound links are the two external
@@ -129,7 +133,14 @@ reset per resolution.
 ## Conventions
 
 - Vanilla HTML/CSS/JS only — no frameworks, no bundler.
-- Mobile-first; keep the UI simple. Match the existing dark theme and CSS-variable palette.
+- Mobile-first; keep the UI simple. Match the existing CSS-variable palette.
+- **Theming:** light/dark via a `data-theme` attribute on `<html>` (toggle in `.topbar`,
+  `toggleTheme`/`applyThemeUI`; an inline `<head>` script sets it before first paint to avoid a
+  flash). The palette has a **two-token split** for the warm colors: `--gold` / `--accent` stay
+  bright for button *fills and borders* in both themes, while `--gold-ink` / `--accent-ink` are
+  the *text* versions (they equal the bright values in dark, and darken under
+  `:root[data-theme="light"]` for contrast on white). `--green` / `--red` are single tokens that
+  darken in light. So: fills use `--gold`/`--accent`; text uses `--gold-ink`/`--accent-ink`.
 - One typeface: the system font stack on `body`; `button { font-family: inherit }` keeps
   controls on it. "Weaponry" is title-case everywhere. Rank shows as `N · ★…` on the
   pick/confirm screens (via `rankHtml`) and `★… · N` on the rules sheet; a Lionheart buff adds

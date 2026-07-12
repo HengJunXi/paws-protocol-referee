@@ -13,6 +13,19 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="PAWS Umpire">
+<script>
+  // Set the theme before first paint (avoids a flash): stored choice, else OS preference.
+  (function () {
+    var t = 'dark';
+    try {
+      t = localStorage.getItem('paws-umpire:theme')
+        || (window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+    } catch (e) {}
+    document.documentElement.dataset.theme = t;
+    var m = document.querySelector('meta[name="theme-color"]');
+    if (m) m.content = (t === 'light') ? '#f4f5f7' : '#1a1d21';
+  })();
+</script>
 <style>
   :root {
     --bg: #1a1d21;
@@ -21,10 +34,26 @@
     --line: #3a4048;
     --text: #e8eaed;
     --muted: #9aa3ad;
-    --accent: #e07b39;
+    --accent: #e07b39;   /* bright — button fills / borders */
     --green: #3fbf6f;
     --red: #e5484d;
-    --gold: #f5c344;
+    --gold: #f5c344;     /* bright — button fills / borders */
+    --accent-ink: var(--accent); /* accent used as text (darkened in light theme) */
+    --gold-ink: var(--gold);     /* gold used as text (darkened in light theme) */
+  }
+  /* Light theme: neutrals flip; gold/accent stay bright for fills, but their -ink
+     text variants darken for contrast, and green/red darken for text on white. */
+  :root[data-theme="light"] {
+    --bg: #f4f5f7;
+    --panel: #ffffff;
+    --panel-2: #eceef2;
+    --line: #d6dae0;
+    --text: #1b1e23;
+    --muted: #5c6470;
+    --green: #1e9c56;
+    --red: #cf3138;
+    --accent-ink: #b5531b;
+    --gold-ink: #8f6209;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; padding: 0; }
@@ -61,7 +90,7 @@
     margin: 0;
     font-size: 1.15rem;
     letter-spacing: 0.5px;
-    color: var(--accent);
+    color: var(--accent-ink);
     text-transform: uppercase;
   }
   header .sub {
@@ -88,8 +117,8 @@
     font-weight: 700;
     letter-spacing: 1px;
     text-transform: uppercase;
-    color: var(--gold);
-    border: 1px solid var(--gold);
+    color: var(--gold-ink);
+    border: 1px solid var(--gold-ink);
     border-radius: 999px;
     padding: 3px 10px;
   }
@@ -97,7 +126,7 @@
     margin: 0 0 14px;
     font-size: 1.25rem;
   }
-  .screen h2 .who { color: var(--gold); }
+  .screen h2 .who { color: var(--gold-ink); }
   .screen h2 .count { color: var(--muted); font-weight: 400; }
 
   .furor-banner {
@@ -105,8 +134,8 @@
     align-items: center;
     gap: 8px;
     background: rgba(245, 195, 68, 0.12);
-    border: 1px solid var(--gold);
-    color: var(--gold);
+    border: 1px solid var(--gold-ink);
+    color: var(--gold-ink);
     border-radius: 10px;
     padding: 8px 12px;
     font-size: 0.82rem;
@@ -117,8 +146,8 @@
     align-items: center;
     gap: 8px;
     background: rgba(224, 123, 57, 0.12);
-    border: 1px solid var(--accent);
-    color: var(--accent);
+    border: 1px solid var(--accent-ink);
+    color: var(--accent-ink);
     border-radius: 10px;
     padding: 8px 12px;
     font-size: 0.82rem;
@@ -142,11 +171,11 @@
     transition: background .12s, border-color .12s, transform .06s;
   }
   .card-btn:active { transform: scale(0.98); background: var(--panel-2); border-color: var(--accent); }
-  .card-btn.selected { border-color: var(--gold); background: var(--panel-2); }
+  .card-btn.selected { border-color: var(--gold-ink); background: var(--panel-2); }
   .card-btn .emoji { font-size: 1.7rem; line-height: 1; width: 34px; text-align: center; }
   .card-btn .meta { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
   .card-btn .cname { font-weight: 600; }
-  .card-btn .stars { color: var(--gold); font-size: 0.85rem; letter-spacing: 1px; }
+  .card-btn .stars { color: var(--gold-ink); font-size: 0.85rem; letter-spacing: 1px; }
   .card-btn .weapon-tag { color: var(--muted); font-size: 0.75rem; }
   .pick-badge {
     min-width: 26px;
@@ -191,9 +220,9 @@
   .seg-btn { background: transparent; border: none; color: var(--muted); padding: 7px 13px; font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: inherit; }
   .seg-btn + .seg-btn { border-left: 1px solid var(--line); }
   .seg-btn.active { background: var(--gold); color: #2a2410; }
-  .modal-buff { margin-top: 10px; font-size: 0.82rem; color: var(--gold); }
+  .modal-buff { margin-top: 10px; font-size: 0.82rem; color: var(--gold-ink); }
   /* The Lionheart "+1" star(s) — accent-colored and glowing so they read as an added buff */
-  .buff-star { color: var(--accent); text-shadow: 0 0 5px var(--accent); font-weight: 700; margin-left: 3px; }
+  .buff-star { color: var(--accent-ink); text-shadow: 0 0 5px var(--accent-ink); font-weight: 700; margin-left: 3px; }
 
   .spacer { flex: 1; }
 
@@ -224,7 +253,7 @@
   }
   .pass .lock { font-size: 3.4rem; }
   .pass h2 { font-size: 1.5rem; margin: 4px 0; }
-  .pass h2 .who { color: var(--gold); }
+  .pass h2 .who { color: var(--gold-ink); }
   .pass p { color: var(--muted); margin: 0 0 8px; max-width: 300px; line-height: 1.5; }
   .pass .actions { width: 100%; }
 
@@ -242,7 +271,7 @@
   }
   .outcome.full { margin-bottom: 12px; }
   .outcome .role { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
-  .outcome .role .name { display: block; margin-top: 2px; color: var(--gold); font-size: 0.82rem; text-transform: none; letter-spacing: 0; }
+  .outcome .role .name { display: block; margin-top: 2px; color: var(--gold-ink); font-size: 0.82rem; text-transform: none; letter-spacing: 0; }
   .outcome .status { margin-top: 12px; font-size: 1.1rem; font-weight: 800; letter-spacing: 0.5px; }
   .outcome .icon { font-size: 2rem; }
   .outcome .buff-chip {
@@ -254,7 +283,7 @@
     padding: 3px 9px;
     border: 1px solid var(--line);
   }
-  .outcome .buff-chip.on { color: var(--accent); border-color: var(--accent); font-weight: 700; }
+  .outcome .buff-chip.on { color: var(--accent-ink); border-color: var(--accent-ink); font-weight: 700; }
   .outcome .buff-chip.off { color: var(--muted); }
   .outcome.survived { border-color: var(--green); }
   .outcome.survived .word { color: var(--green); }
@@ -285,7 +314,7 @@
     line-height: 1.3;
   }
   /* Prominent privacy reminder on the hand-off screen */
-  .pass-note { color: var(--gold); font-size: 0.9rem; margin: 2px 0 0; }
+  .pass-note { color: var(--gold-ink); font-size: 0.9rem; margin: 2px 0 0; }
 
   /* Rules cheat-sheet */
   .topbar { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 2px; }
@@ -300,6 +329,7 @@
     text-transform: uppercase;
     cursor: pointer;
   }
+  .theme-btn { font-size: 0.95rem; padding: 4px 10px; line-height: 1; }
   .rules-overlay {
     position: fixed;
     inset: 0;
@@ -323,7 +353,7 @@
     padding: 16px 0 12px;
     border-bottom: 1px solid var(--line);
   }
-  .rules-title { font-size: 1.05rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; }
+  .rules-title { font-size: 1.05rem; font-weight: 700; color: var(--accent-ink); text-transform: uppercase; letter-spacing: 0.5px; }
   .rules-close {
     background: transparent;
     border: 1px solid var(--line);
@@ -341,7 +371,7 @@
   .rank-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
   .rank-row .emoji { font-size: 1.4rem; width: 30px; text-align: center; }
   .rank-row .rn { flex: 1; font-weight: 600; }
-  .rank-row .rs { color: var(--gold); font-size: 0.85rem; letter-spacing: 1px; }
+  .rank-row .rs { color: var(--gold-ink); font-size: 0.85rem; letter-spacing: 1px; }
   .rules-note {
     margin-top: 20px;
     font-size: 0.8rem;
@@ -415,7 +445,7 @@
   .modal-card-row .mc-meta { display: flex; flex-direction: column; flex: 1; min-width: 0; }
   .modal-card-row .mc-name { font-weight: 600; }
   .modal-card-row .mc-sub { font-size: 0.8rem; color: var(--muted); }
-  .modal-card-row .mc-tag { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--gold); }
+  .modal-card-row .mc-tag { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--gold-ink); }
   .modal-actions { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
   .modal-btn { width: 100%; padding: 14px; border: none; border-radius: 12px; font-size: 1rem; font-weight: 700; cursor: pointer; }
   .modal-btn:active { filter: brightness(0.92); }
@@ -427,6 +457,7 @@
 <body>
 <div class="app">
   <div class="topbar">
+    <button class="pill-btn theme-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle light / dark" aria-label="Toggle light or dark theme">🌙</button>
     <button class="pill-btn" onclick="openAbout()">About</button>
     <button class="pill-btn" onclick="openRules()">Rules</button>
   </div>
@@ -459,7 +490,7 @@
     <div class="pass">
       <div class="lock">🔒</div>
       <h2>Attacker locked in</h2>
-      <p>The attacker's card is now hidden.<br>Pass the device to the <strong style="color:var(--gold)">Defender</strong>.</p>
+      <p>The attacker's card is now hidden.<br>Pass the device to the <strong style="color:var(--gold-ink)">Defender</strong>.</p>
       <p class="pass-note">🔒 Defender — shield the screen while you pick.</p>
       <div class="actions">
         <button class="big-btn" onclick="startDefenderPhase()">I'm the Defender — Continue</button>
@@ -494,7 +525,7 @@
     <div class="pass">
       <div class="lock">📱</div>
       <h2>Resolution ready</h2>
-      <p>Defender, show the device to the <strong style="color:var(--gold)">Attacker</strong>, then reveal the outcome together.</p>
+      <p>Defender, show the device to the <strong style="color:var(--gold-ink)">Attacker</strong>, then reveal the outcome together.</p>
       <div class="actions">
         <button class="big-btn" onclick="goResult()">Show Result</button>
       </div>
@@ -563,7 +594,7 @@
     <div class="rules-content">
       <img class="about-img" src="images/paws-protocol-box.avif" alt="P.A.W.S. Protocol board game box">
       <p class="about-lead"><strong>P.A.W.S. Protocol</strong> is a tactical 1v1 / 2v2 card game by <strong>Atelier Rayfish</strong>.</p>
-      <p class="about-lead">This app lets you play the game's <strong style="color:var(--gold)">umpire mode without needing an actual third person</strong> — it privately resolves each attack in the umpire's place, revealing only which card survives or is eliminated. <strong style="color:var(--accent)">You must own the original board game to play</strong> — this is only an assisting tool.</p>
+      <p class="about-lead">This app lets you play the game's <strong style="color:var(--gold-ink)">umpire mode without needing an actual third person</strong> — it privately resolves each attack in the umpire's place, revealing only which card survives or is eliminated. <strong style="color:var(--accent-ink)">You must own the original board game to play</strong> — this is only an assisting tool.</p>
       <div class="about-links">
         <a class="about-link" href="https://www.rayfishgames.com/pawsprotocol" target="_blank" rel="noopener noreferrer">🌐 Official page — Atelier Rayfish</a>
         <a class="about-link" href="https://boardgamegeek.com/boardgame/474041/paws-protocol" target="_blank" rel="noopener noreferrer">🎲 BoardGameGeek</a>
@@ -683,7 +714,8 @@
     const num = c.rank + buff;
     let buffStars = '';
     for (let i = 0; i < buff; i++) buffStars += `<span class="buff-star" title="Lionheart +1">★</span>`;
-    return `<span style="color:var(--gold)">${num} · ${c.stars}</span>${buffStars}`;
+    // Number uses the readable ink; the stars keep the bright brand gold in both themes.
+    return `<span style="color:var(--gold-ink)">${num} ·</span> <span style="color:var(--gold)">${c.stars}</span>${buffStars}`;
   }
   function buffNote(n) {
     return n > 0 ? `<div class="modal-buff">🦁 Lionheart active — +${n} rank</div>` : '';
@@ -939,7 +971,7 @@
     el.innerHTML = DEFENDER_IDS.map(id => {
       const c = CARDS[id];
       const right = c.rank
-        ? `<span class="rs">${c.stars} · ${c.rank}</span>`
+        ? `<span class="rs"><span style="color:var(--gold)">${c.stars}</span> · ${c.rank}</span>`
         : `<span class="rs" style="color:var(--muted)">Weaponry</span>`;
       return `<div class="rank-row"><span class="emoji">${c.emoji}</span><span class="rn">${c.name}</span>${right}</div>`;
     }).join('');
@@ -963,7 +995,23 @@
     document.documentElement.classList.remove('no-scroll');
   }
 
+  // --- Theme (light / dark), remembered in localStorage ---
+  function applyThemeUI() {
+    const light = document.documentElement.dataset.theme === 'light';
+    const btn = document.getElementById('theme-btn');
+    if (btn) btn.textContent = light ? '☀️' : '🌙';
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', light ? '#f4f5f7' : '#1a1d21');
+  }
+  function toggleTheme() {
+    const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem('paws-umpire:theme', next); } catch (e) {}
+    applyThemeUI();
+  }
+
   // init
+  applyThemeUI();
   renderBuffControl('attacker-buff-seg', attackerBuff, setAttackerBuff);
   buildAttackerList();
   buildRulesRanks();
