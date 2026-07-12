@@ -46,8 +46,10 @@ The authoritative implementation is the `resolve(a, d)` function in `index.html`
    appear on the pass/show-result or result screens. This privacy guarantee is the whole point.
    The one deliberate exception: **Furor Tigris** names Colonel Tiger as the attacker, because
    that skill is announced in the game — the two targets stay anonymous.
-2. **Micro Mine cannot be an attacker** (it always loses when attacking). It is absent from
-   `ATTACKER_IDS` but present in `DEFENDER_IDS`.
+2. **Micro Mine attacks but always loses.** When attacking, the Mine self-destructs and the
+   defender survives — except **Mine vs Mine**, where both are eliminated. `ATTACKER_IDS` and
+   `DEFENDER_IDS` are now identical (all 9 cards). Note the Missile exception: a Missile
+   attacked by a Mine *survives* (the Mine is eliminated).
 3. **Raw resolution only, with one supported skill.** `resolve()` implements raw card-vs-card
    combat and must stay that way. The **only** Unique Skill wired into the UI is Furor Tigris
    (Colonel Tiger attacks two different targets; each is resolved independently via `resolve()`,
@@ -62,7 +64,7 @@ The authoritative implementation is the `resolve(a, d)` function in `index.html`
 
 ## Flow
 
-Attacker picks (8 options) → **confirmation modal** (shows the picked character; picking
+Attacker picks (9 options) → **confirmation modal** (shows the picked character; picking
 Colonel Tiger offers "Single attack" or "Furor Tigris — 2 targets") → attacker locked, hand
 device to Defender (no going back to change the attacker once passed) → Defender **selects**
 their card(s): tap to select/deselect, single mode needs 1, Furor Tigris needs 2 different
@@ -101,6 +103,9 @@ Open `index.html` in a browser. Sanity checks:
 - Any animal → Missile: attacker survives, Missile eliminated.
 - Cat → Cat: both eliminated (equal rank).
 - Tiger → Cat: attacker survives, defender eliminated.
+- Mine → Lion (or any non-Mine): Mine eliminated, defender survives.
+- Mine → Mine: both eliminated.
+- Mine → Missile: Mine eliminated, Missile survives (Missile's Mine exception).
 - Furor Tigris → Cat + Mine: Tiger eliminated (loses to Mine); Target 1 (Cat) eliminated,
   Target 2 (Mine) eliminated. Second target list must exclude the first pick.
 

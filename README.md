@@ -9,8 +9,8 @@ Everything is client-side — no build step, no server, no state kept between re
 
 ## How it works
 
-1. **Attacker** picks their card and confirms (8 options — Micro Mine cannot attack).
-   Choosing Colonel Tiger offers **Furor Tigris** — attack two different targets.
+1. **Attacker** picks their card and confirms (all 9 options — Micro Mine may attack, but it
+   always loses). Choosing Colonel Tiger offers **Furor Tigris** — attack two different targets.
 2. The pick is hidden; hand the device to the **Defender**.
 3. **Defender** selects their card — or, under Furor Tigris, two different targets — and confirms
    (all 9 options available).
@@ -39,8 +39,9 @@ No card names are ever displayed in the resolution — only outcomes.
 - **Lion vs Lion** → attacker always wins.
 - **Rat** vs Lion / Mine / Missile → Rat always wins (either direction).
 - **Missile attacking** (except vs Rat) → target eliminated **and** Missile self-destructs → both eliminated.
-- **Missile being attacked** → Missile always loses.
+- **Missile being attacked** → Missile always loses (but *survives* when attacked by a Mine).
 - **Mine being attacked** (except vs Rat) → Mine wins but is eliminated after → both eliminated.
+- **Mine attacking** → Mine always self-destructs and the defender survives; **Mine vs Mine** → both eliminated.
 
 > Unique Skills (Lionheart, Grizzly Guard, etc.) are **out of scope** — players apply those
 > manually. The referee resolves raw card-vs-card combat only.

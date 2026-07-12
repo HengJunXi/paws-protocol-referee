@@ -408,8 +408,8 @@
         <li><strong>Equal rank</strong> (same card) &rarr; both eliminated.</li>
         <li><strong>Lion vs Lion</strong> &rarr; the attacker wins.</li>
         <li><strong>Rat</strong> vs Lion, Mine or Missile &rarr; Rat always wins.</li>
-        <li><strong>Missile</strong> attacking destroys the target but self-destructs (both eliminated); it loses when attacked, and is beaten by a Rat.</li>
-        <li><strong>Mine</strong> (defence only here) destroys its attacker but self-destructs (both eliminated); beaten by a Rat.</li>
+        <li><strong>Missile</strong> attacking destroys the target but self-destructs (both eliminated); when attacked it is destroyed — except by a Mine, which it survives. Beaten by a Rat.</li>
+        <li><strong>Mine</strong> attacking always self-destructs and the defender survives (two Mines eliminate each other); when attacked, it destroys its attacker but self-destructs (both eliminated). Beaten by a Rat.</li>
         <li><strong>Furor Tigris</strong> &rarr; Colonel Tiger strikes two different targets; each is resolved separately, and Tiger is eliminated if it loses either.</li>
       </ul>
 
@@ -446,7 +446,7 @@
     missile: { name: 'Mini Missile',     emoji: '🚀', rank: null },
     mine:    { name: 'Micro Mine',       emoji: '💣', rank: null },
   };
-  const ATTACKER_IDS = ['lion','tiger','bear','boar','wolf','cat','rat','missile']; // Mine can't attack
+  const ATTACKER_IDS = ['lion','tiger','bear','boar','wolf','cat','rat','missile','mine'];
   const DEFENDER_IDS = ['lion','tiger','bear','boar','wolf','cat','rat','missile','mine'];
 
   // --- State (reset every resolution) ---
@@ -464,6 +464,11 @@
     // Rat vs Lion / Mine / Missile: Rat always wins (either direction)
     if (a === 'rat' && (d === 'lion' || d === 'mine' || d === 'missile')) return { atk: SURV, def: ELIM };
     if (d === 'rat' && (a === 'lion' || a === 'mine' || a === 'missile')) return { atk: ELIM, def: SURV };
+
+    // Mine attacking always loses (self-destructs): Mine is eliminated and the defender
+    // survives — except Mine vs Mine, where both are eliminated. (Rat defender handled above;
+    // a Missile attacked by a Mine survives per the Missile exception.)
+    if (a === 'mine') return { atk: ELIM, def: d === 'mine' ? ELIM : SURV };
 
     // Missile attacking (already excluded vs Rat above): wins but self-destructs -> both eliminated
     if (a === 'missile') return { atk: ELIM, def: ELIM };

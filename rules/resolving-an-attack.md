@@ -34,8 +34,8 @@ Rat always wins.
 ## How the referee app applies these rules
 
 The referee (`index.html`) resolves an attack of **attacker → defender** and reports only
-whether each card *survives* or is *eliminated* (never the identity). Micro Mine is not
-offered as an attacker (it always loses when attacking).
+whether each card *survives* or is *eliminated* (never the identity). Micro Mine may attack,
+but it always loses (it self-destructs when attacking).
 
 | Situation | Attacker | Defender |
 |-----------|----------|----------|
@@ -44,9 +44,11 @@ offered as an attacker (it always loses when attacking).
 | Equal rank (same animal) | eliminated | eliminated |
 | Lion vs Lion | survives | eliminated |
 | Rat → Lion / Mine / Missile | survives | eliminated |
-| Lion / Missile → Rat | eliminated | survives |
+| Lion / Mine / Missile → Rat | eliminated | survives |
 | Missile → any animal (non-Rat) | eliminated | eliminated |
 | Missile → Missile | eliminated | eliminated |
 | Missile → Mine | eliminated | eliminated |
 | Any animal (non-Rat) → Mine | eliminated | eliminated |
 | Any animal → Missile | survives | eliminated |
+| Mine → Mine | eliminated | eliminated |
+| Mine → anything except Mine (incl. Missile) | eliminated | survives |
